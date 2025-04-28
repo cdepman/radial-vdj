@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DJ-Style Radial SVG Animator</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; overflow: hidden;
+      background: #111;
+      font-family: 'Courier New', monospace;
+      color: #0f0;
+    }
+    #animationContainer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+    }
+    .monad {
+      position: absolute;
+      display: block;
+      transform-origin: center center;
+      pointer-events: none;
+    }
+    .control-panel {
+      position: fixed;
+      left: 10px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid #0f0;
+      border-radius: 6px;
+      padding: 12px;
+      box-shadow: 0 0 10px #0f0;
+      z-index: 1000;
+      width: 240px;
+    }
+    #radialControls { top: 10px; }
+    #audioControls  { bottom: 10px; }
+
+    .control-panel h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      text-align: center;
+      text-decoration: underline;
+    }
+    .control-panel label {
+      display: block;
+      font-size: 12px;
+      margin: 6px 0 2px;
+    }
+    .control-panel input[type="range"],
+    .control-panel input[type="number"],
+    .control-panel input[type="color"] {
+      width: 100%;
+    }
+    .control-panel input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    .control-panel .small {
+      font-size: 11px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Animation canvas -->
+  <div id="animationContainer"></div>
+  <div id="svgContainer" style="display:none;"></div>
+
+  <!-- Top: Radial controls -->
+  <div id="radialControls" class="control-panel">
+    <h3>🎛️ Radial Controls</h3>
+    <label>Upload SVG:</label>
+    <input type="file" id="svgUpload" accept=".svg">
+
+    <label>Repeats:</label>
+    <input type="number" id="repeatCount" min="1" max="36">
+
+    <label>Base Size (px):</label>
+    <input type="range" id="sizeSlider" min="50" max="500">
+
+    <label>Radius (px):</label>
+    <input type="range" id="radiusSlider" min="0" max="500">
+
+    <label>Center X (%):</label>
+    <input type="range" id="posXSlider" min="0" max="100">
+
+    <label>Center Y (%):</label>
+    <input type="range" id="posYSlider" min="0" max="100">
+
+    <label>Composite Speed:</label>
+    <input type="range" id="compSpeed" min="-0.1" max="0.1" step="0.001">
+
+    <label>Individual Speed:</label>
+    <input type="range" id="indSpeed" min="-0.2" max="0.2" step="0.001">
+
+    <label>Breathing Rate:</label>
+    <input type="range" id="breathRate" min="0" max="0.2" step="0.001">
+
+    <label>Breathing Amp:</label>
+    <input type="range" id="breathAmp" min="0" max="1" step="0.01">
+
+    <label>Background:</label>
+    <input type="color" id="bgColorPicker">
+
+    <label><input type="checkbox" id="colorShiftToggle"> Hue-Shift</label>
+    <label>Hue Speed:</label>
+    <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
+  </div>
+
+  <!-- Bottom: Audio controls -->
+  <div id="audioControls" class="control-panel">
+    <h3>🎧 Audio Controls</h3>
+    <label><input type="checkbox" id="audioToggle"> Audio Reactive</label>
+    <span class="small">(allow mic when prompted)</span>
+
+    <label>Sensitivity:</label>
+    <input type="range" id="audioSens" min="0" max="5" step="0.1">
+
+    <label>Bass Boost:</label>
+    <input type="range" id="bassBoost" min="0" max="5" step="0.1">
+
+    <label>Mid Boost:</label>
+    <input type="range" id="midBoost" min="0" max="5" step="0.1">
+
+    <label>Treble Boost:</label>
+    <input type="range" id="trebBoost" min="0" max="5" step="0.1">
+
+    <label>Max Radius Mod (px):</label>
+    <input type="range" id="audioModMax" min="0" max="500" step="10">
+  </div>
+
+  <script>
+  // === Globals & DOM refs ===
+  let sourceSvg = null, vbW=1, vbH=1;
+  let clones = [], compAng=0, breathAng=0, hueAng=0, running=false;
+
+  const svgUpload        = document.getElementById('svgUpload');
+  const repeatCountIn    = document.getElementById('repeatCount');
+  const sizeSlider       = document.getElementById('sizeSlider');
+  const radiusSlider     = document.getElementById('radiusSlider');
+  const posXSlider       = document.getElementById('posXSlider');
+  const posYSlider       = document.getElementById('posYSlider');
+  const compSpeedIn      = document.getElementById('compSpeed');
+  const indSpeedIn       = document.getElementById('indSpeed');
+  const breathRateIn     = document.getElementById('breathRate');
+  const breathAmpIn      = document.getElementById('breathAmp');
+  const bgPicker         = document.getElementById('bgColorPicker');
+  const hueToggle        = document.getElementById('colorShiftToggle');
+  const hueSpeedIn       = document.getElementById('hueSpeed');
+
+  const audioToggle      = document.getElementById('audioToggle');
+  const audioSensIn      = document.getElementById('audioSens');
+  const bassBoostIn      = document.getElementById('bassBoost');
+  const midBoostIn       = document.getElementById('midBoost');
+  const trebBoostIn      = document.getElementById('trebBoost');
+  const audioModMaxIn    = document.getElementById('audioModMax');
+
+  const animContainer    = document.getElementById('animationContainer');
+  const svgContainer     = document.getElementById('svgContainer');
+
+  // sensible defaults
+  const D = {
+    repeats:    12,
+    size:      150,
+    radius:    200,
+    posX:       50,
+    posY:       50,
+    compSpeed:  0.005,
+    indSpeed:   0.05,
+    breathRate: 0.02,
+    breathAmp:  0.1,
+    bgColor:   '#111',
+    hueMode:   false,
+    hueSpeed:   0.2,
+
+    audioSens:  1,
+    bassBoost:  1,
+    midBoost:   1,
+    trebBoost:  1,
+    audioModMax: 100
+  };
+
+  function setDefaults() {
+    repeatCountIn.value    = D.repeats;
+    sizeSlider.value       = D.size;
+    radiusSlider.value     = D.radius;
+    posXSlider.value       = D.posX;
+    posYSlider.value       = D.posY;
+    compSpeedIn.value      = D.compSpeed;
+    indSpeedIn.value       = D.indSpeed;
+    breathRateIn.value     = D.breathRate;
+    breathAmpIn.value      = D.breathAmp;
+    bgPicker.value         = D.bgColor;
+    hueToggle.checked      = D.hueMode;
+    hueSpeedIn.value       = D.hueSpeed;
+
+    audioSensIn.value      = D.audioSens;
+    bassBoostIn.value      = D.bassBoost;
+    midBoostIn.value       = D.midBoost;
+    trebBoostIn.value      = D.trebBoost;
+    audioModMaxIn.value    = D.audioModMax;
+    audioToggle.checked    = false;
+  }
+
+  bgPicker.addEventListener('input', e => {
+    document.documentElement.style.background = e.target.value;
+  });
+
+  // === SVG loading & cloning ===
+  svgUpload.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      const doc = new DOMParser()
+                     .parseFromString(ev.target.result,'image/svg+xml');
+      const svg = doc.querySelector('svg');
+      if (!svg) return alert('Invalid SVG!');
+      svgContainer.innerHTML = '';
+      svgContainer.appendChild(svg);
+
+      sourceSvg = svg;
+      const vb = svg.viewBox.baseVal;
+      vbW = vb.width||svg.clientWidth; vbH = vb.height||svg.clientHeight;
+
+      compAng=breathAng=hueAng=0;
+      setDefaults();
+      buildMonads();
+      if (!running) {
+        running = true;
+        requestAnimationFrame(animate);
+      }
+    };
+    r.readAsText(f);
+  });
+
+  repeatCountIn.addEventListener('input', () => {
+    if (sourceSvg) buildMonads();
+  });
+
+  function buildMonads(){
+    clones=[]; animContainer.innerHTML='';
+    const n = parseInt(repeatCountIn.value,10);
+    for(let i=0;i<n;i++){
+      const c = sourceSvg.cloneNode(true);
+      c.removeAttribute('style'); c.style.display='block';
+      c.classList.add('monad');
+      animContainer.appendChild(c);
+      clones.push({el:c,ang:0});
+    }
+  }
+
+  // === Audio setup ===
+  let audioCtx, analyser, freqData;
+  audioToggle.addEventListener('change', async () => {
+    if (audioToggle.checked && !audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        const src = audioCtx.createMediaStreamSource(stream);
+        src.connect(analyser);
+      } catch(err) {
+        alert('Mic access denied');
+        audioToggle.checked = false;
+      }
+    }
+  });
+
+  // === Animation loop ===
+  function animate(){
+    // live values
+    const baseSize  = +sizeSlider.value;
+    const baseRad   = +radiusSlider.value;
+    const cx        = (+posXSlider.value/100)*animContainer.clientWidth;
+    const cy        = (+posYSlider.value/100)*animContainer.clientHeight;
+    const compSpd   = +compSpeedIn.value;
+    const indSpd    = +indSpeedIn.value;
+    const bRate     = +breathRateIn.value;
+    const bAmp      = +breathAmpIn.value;
+    const bg        = bgPicker.value;
+    const hueOn     = hueToggle.checked;
+    const hueSpd    = +hueSpeedIn.value;
+
+    // audio params
+    const audioOn   = audioToggle.checked && analyser;
+    const sens      = +audioSensIn.value;
+    const bassB     = +bassBoostIn.value;
+    const midB      = +midBoostIn.value;
+    const trebB     = +trebBoostIn.value;
+    const maxMod    = +audioModMaxIn.value;
+
+    document.body.style.background = bg;
+    compAng += compSpd;
+    breathAng += bRate;
+    if (hueOn) hueAng = (hueAng + hueSpd)%360;
+
+    // get audio level
+    let audioLevel = 0;
+    if (audioOn) {
+      analyser.getByteFrequencyData(freqData);
+      const len = freqData.length;
+      const third = Math.floor(len/3);
+      const bass  = freqData.slice(0,third).reduce((a,v)=>a+v,0)/third;
+      const mid   = freqData.slice(third,2*third).reduce((a,v)=>a+v,0)/third;
+      const treb  = freqData.slice(2*third).reduce((a,v)=>a+v,0)/(len-2*third);
+      const totalWeight = bassB+midB+trebB;
+      const weighted = bass*bassB + mid*midB + treb*trebB;
+      audioLevel = (weighted/255/totalWeight)*sens;
+    }
+
+    const n = clones.length;
+    const step = Math.PI*2/n;
+    clones.forEach((c,i) => {
+      // dynamic radius = base + audio pulse
+      const rad = baseRad + audioLevel*maxMod;
+
+      const ang = i*step + compAng;
+      const x = cx + rad * Math.cos(ang);
+      const y = cy + rad * Math.sin(ang);
+
+      c.ang += indSpd;
+      const scale = 1 + bAmp * Math.sin(breathAng + i*step);
+
+      const wpx = baseSize*scale;
+      const hpx = baseSize*scale*(vbH/vbW);
+
+      // apply
+      c.el.style.width     = wpx+'px';
+      c.el.style.height    = hpx+'px';
+      c.el.style.left      = (x-wpx/2)+'px';
+      c.el.style.top       = (y-hpx/2)+'px';
+      c.el.style.transform = `rotate(${c.ang}rad)`;
+
+      if (hueOn) {
+        const shift = (hueAng + i*(360/n))%360;
+        c.el.style.filter = `hue-rotate(${shift}deg)`;
+      } else {
+        c.el.style.filter = '';
+      }
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  </script>
+</body>
+</html>
