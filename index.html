@@ -178,11 +178,11 @@
 
 <body>
 
-  <!-- Animation layers -->
+  <!-- Animation canvas -->
   <div id="animationContainer"></div>
   <div id="svgContainer" style="display:none;"></div>
 
-  <!-- Top: Radial controls -->
+  <!-- Radial / Scale controls -->
   <div id="radialControls" class="control-panel">
     <h3>🎛️ Animation Controls</h3>
 
@@ -212,6 +212,7 @@
     <input type="range" id="scaleRate" min="0" max="0.2" step="0.001">
     <label>Scale Amount:</label>
     <input type="range" id="scaleAmp" min="0" max="1" step="0.01">
+    <label><input type="checkbox" id="perItemScaleToggle"> Individual Scale Variation</label>
 
     <label><input type="checkbox" id="radialToggle"> Enable Radial Oscillation</label>
     <label>Oscillation Rate:</label>
@@ -229,7 +230,7 @@
     <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
   </div>
 
-  <!-- Bottom: Audio controls -->
+  <!-- Audio controls -->
   <div id="audioControls" class="control-panel">
     <h3>🎧 Audio Controls</h3>
     <label><input type="checkbox" id="audioToggle"> Audio Reactive</label>
@@ -262,6 +263,7 @@
     const scaleToggle = document.getElementById('scaleToggle');
     const scaleRateIn = document.getElementById('scaleRate');
     const scaleAmpIn = document.getElementById('scaleAmp');
+    const perItemScaleToggle = document.getElementById('perItemScaleToggle');
 
     const radialToggle = document.getElementById('radialToggle');
     const radialRateIn = document.getElementById('radialRate');
@@ -292,6 +294,7 @@
       indSpeed: 0.05,
       scaleRate: 0.02,
       scaleAmt: 0.1,
+      perItemScale: false,
       radialRate: 0.02,
       radialAmt: 50,
       bgColor: '#111111',
@@ -303,9 +306,7 @@
       midBoost: 1,
       trebBoost: 1,
       audioModMax: 100,
-      audioReactive: false,
-      scaleEnabled: false,
-      radialEnabled: false
+      audioReactive: false
     };
 
     function loadSettings() {
@@ -327,6 +328,7 @@
         indSpeed: +indSpeedIn.value,
         scaleRate: +scaleRateIn.value,
         scaleAmt: +scaleAmpIn.value,
+        perItemScale: perItemScaleToggle.checked,
         radialRate: +radialRateIn.value,
         radialAmt: +radialAmpIn.value,
         bgColor: bgPicker.value,
@@ -338,9 +340,7 @@
         midBoost: +midBoostIn.value,
         trebBoost: +trebBoostIn.value,
         audioModMax: +audioModMaxIn.value,
-        audioReactive: audioToggle.checked,
-        scaleEnabled: scaleToggle.checked,
-        radialEnabled: radialToggle.checked
+        audioReactive: audioToggle.checked
       };
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(obj));
     }
@@ -353,6 +353,7 @@
       indSpeedIn.value = D.indSpeed;
       scaleRateIn.value = D.scaleRate;
       scaleAmpIn.value = D.scaleAmt;
+      perItemScaleToggle.checked = D.perItemScale;
       radialRateIn.value = D.radialRate;
       radialAmpIn.value = D.radialAmt;
       bgPicker.value = D.bgColor;
@@ -365,8 +366,6 @@
       trebBoostIn.value = D.trebBoost;
       audioModMaxIn.value = D.audioModMax;
       audioToggle.checked = D.audioReactive;
-      scaleToggle.checked = D.scaleEnabled;
-      radialToggle.checked = D.radialEnabled;
       document.body.style.background = D.bgColor;
     }
 
@@ -377,16 +376,15 @@
       });
     }
 
-    // Background picker live update
+    // live background update
     bgPicker.addEventListener('input', e => {
       document.body.style.background = e.target.value;
     });
 
-    // File upload & drag/drop
+    // file load handlers
     svgUpload.addEventListener('change', e => {
       const f = e.target.files[0];
-      if (!f) return;
-      handleFile(f);
+      if (f) handleFile(f);
     });
     const dropZone = document.getElementById('dropZone');
     dropZone.addEventListener('dragover', e => {
@@ -497,7 +495,7 @@
       }
     }
 
-    // Audio setup
+    // audio setup
     let audioCtx, analyser, freqData;
     audioToggle.addEventListener('change', async () => {
       if (audioToggle.checked && !audioCtx) {
@@ -516,7 +514,7 @@
       }
     });
 
-    // Main animation loop
+    // main animation loop
     function animate() {
       const baseSize = +sizeSlider.value;
       const baseRad = +radiusSlider.value;
@@ -528,7 +526,6 @@
       const rAmt = +radialAmpIn.value;
       const bg = bgPicker.value;
       const hueOn = hueToggle.checked;
-      const hueSpd = +hueSpeedIn.value;
       const hueDr = +hueDriftSpeedIn.value;
 
       // audio processing
@@ -540,7 +537,7 @@
         const bass = freqData.slice(0, third).reduce((a, v) => a + v, 0) / third;
         const mid = freqData.slice(third, 2 * third).reduce((a, v) => a + v, 0) / third;
         const treb = freqData.slice(2 * third).reduce((a, v) => a + v, 0) / (len - 2 * third);
-        const totalW = (+bassBoostIn.value) + (+midBoostIn.value) + (+trebBoostIn.value);
+        const totalW = +bassBoostIn.value + +midBoostIn.value + +trebBoostIn.value;
         const weighted = bass * +bassBoostIn.value + mid * +midBoostIn.value + treb * +trebBoostIn.value;
         audioLevel = (weighted / 255 / totalW) * +audioSensIn.value;
       }
@@ -551,45 +548,52 @@
       radOscAng += rRate;
       if (hueOn) hueAng = (hueAng + hueDr) % 360;
 
+      // uniform radial offset
+      const radialOffset = radialToggle.checked
+        ? rAmt * Math.sin(radOscAng)
+        : 0;
+
       const n = clones.length;
       const step = Math.PI * 2 / n;
       clones.forEach((c, i) => {
-        // dynamic radius + oscillation
-        let rad = baseRad + audioLevel * +audioModMaxIn.value;
-        if (radialToggle.checked) {
-          rad += rAmt * Math.sin(radOscAng + i * step);
-        }
-        // compute position
+        // radius with uniform oscillation + audio
+        const rad = baseRad + audioLevel * +audioModMaxIn.value + radialOffset;
         const ang = i * step + compAng;
         const cx = animContainer.clientWidth / 2;
         const cy = animContainer.clientHeight / 2;
         const x = cx + rad * Math.cos(ang);
         const y = cy + rad * Math.sin(ang);
 
-        // update rotation
         c.ang += indSpd;
 
-        // scale pulsation
-        const scale = scaleToggle.checked
-          ? 1 + sAmt * Math.sin(scaleAng + i * step)
-          : 1;
+        // scale pulsation (uniform vs per-item)
+        let scale = 1;
+        if (scaleToggle.checked) {
+          const perItem = perItemScaleToggle.checked;
+          if (perItem) {
+            scale = 1 + sAmt * Math.sin(scaleAng + i * step);
+          } else {
+            scale = 1 + sAmt * Math.sin(scaleAng);
+          }
+        }
 
         const wpx = baseSize * scale;
         const hpx = baseSize * scale * (vbH / vbW);
 
-        // apply to DOM
         c.el.style.width = wpx + 'px';
         c.el.style.height = hpx + 'px';
         c.el.style.left = (x - wpx / 2) + 'px';
         c.el.style.top = (y - hpx / 2) + 'px';
         c.el.style.transform = `rotate(${c.ang}rad)`;
 
-        // color shift + brightness/sat modulation
         if (hueOn) {
           const shift = (hueAng + i * (360 / n)) % 360;
           let brightness = 1, saturation = 1;
           if (scaleToggle.checked) {
-            const t = (Math.sin(scaleAng + i * step) + 1) / 2;
+            const perItem = perItemScaleToggle.checked;
+            const t = perItem
+              ? (Math.sin(scaleAng + i * step) + 1) / 2
+              : (Math.sin(scaleAng) + 1) / 2;
             brightness = 0.75 + 0.25 * t;
             saturation = 0.75 + 0.5 * t;
           }
@@ -606,7 +610,7 @@
       requestAnimationFrame(animate);
     }
 
-    // === INIT ===
+    // initialize
     loadSettings();
     setDefaults();
     loadSavedFile();
