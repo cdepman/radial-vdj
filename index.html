@@ -639,6 +639,7 @@
       document.body.style.background = D.bgColor;
       updateValueDisplays();
       saveSettings(); // Save the reset values
+      buildMonads(); // Rebuild clones to reflect repeat count
     }
 
     function resetFilterControls() {
@@ -795,6 +796,7 @@
     });
 
     function buildMonads() {
+      if (!sourceSvg) return; // Prevent error if no SVG/PNG loaded
       clones = [];
       animContainer.innerHTML = '';
       const n = parseInt(repeatCountIn.value, 10);
@@ -869,7 +871,9 @@
         if (radialToggle.checked) {
           const perItem = perItemRadialToggle.checked;
           if (perItem) {
-            rad += rAmt * Math.sin(radOscAng + i * step);
+            // Golden angle for more even distribution
+            const goldenAngle = 2.399963229728653;
+            rad += rAmt * Math.sin(radOscAng + i * goldenAngle);
           } else {
             rad += rAmt * Math.sin(radOscAng);
           }
