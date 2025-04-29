@@ -42,16 +42,18 @@
       box-shadow: 0 0 10px #0f0;
       z-index: 1000;
       width: 240px;
+      transition: all 0.3s ease;
+      display: none;
+      overflow-y: auto;
     }
 
-    #radialControls {
-      top: 10px;
-      left: 10px;
+    .control-panel.active {
+      display: block;
     }
 
-    #audioControls {
-      top: 10px;
-      right: 10px;
+    .control-panel.collapsed {
+      height: 40px;
+      overflow: hidden;
     }
 
     .control-panel h3 {
@@ -59,6 +61,22 @@
       font-size: 16px;
       text-align: center;
       text-decoration: underline;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .control-panel h3::after {
+      content: '▼';
+      font-size: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .control-panel.collapsed h3::after {
+      transform: rotate(-90deg);
     }
 
     .control-panel label {
@@ -191,6 +209,74 @@
       background: hsl(45, 80%, 35%);
       transform: translatey(-100%);
     }
+
+    .menu-button {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid #0f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #0f0;
+      cursor: pointer;
+      z-index: 1001;
+      font-family: 'Courier New', monospace;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    .menu-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+    }
+
+    .panel-menu {
+      position: fixed;
+      top: 50px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid #0f0;
+      border-radius: 6px;
+      padding: 8px;
+      z-index: 1001;
+      display: none;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    .panel-menu.active {
+      display: block;
+    }
+
+    .panel-menu-item {
+      padding: 8px 12px;
+      color: #0f0;
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 2px 0;
+      transition: background 0.2s ease;
+    }
+
+    .panel-menu-item:hover {
+      background: rgba(0, 255, 0, 0.1);
+    }
+
+    .panel-menu-item.active {
+      background: rgba(0, 255, 0, 0.2);
+    }
+
+    #radialControls {
+      top: 10px;
+      left: 10px;
+    }
+
+    #filterControls {
+      top: 10px;
+      left: 10px;
+    }
+
+    #audioControls {
+      top: 10px;
+      left: 10px;
+    }
   </style>
 </head>
 
@@ -200,112 +286,179 @@
   <div id="animationContainer"></div>
   <div id="svgContainer" style="display:none;"></div>
 
-  <!-- Radial / Scale controls -->
-  <div id="radialControls" class="control-panel">
-    <h3>🎛️ Animation Controls</h3>
+  <!-- Menu Button -->
+  <div class="menu-button">☰ Menu</div>
+  <div class="panel-menu">
+    <div class="panel-menu-item" data-panel="radialControls">🎛️ Animation Controls</div>
+    <div class="panel-menu-item" data-panel="filterControls">🎨 Filter Controls</div>
+    <div class="panel-menu-item" data-panel="audioControls">🎧 Audio Controls</div>
+  </div>
 
-    <label>Upload SVG or PNG:</label>
-    <div id="dropZone"
-      style="border:2px dashed #0f0; padding:20px; text-align:center; margin-bottom:10px; cursor:pointer; position:relative;">
-      <input type="file" id="svgUpload" accept=".svg,.png"
-        style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-      <div style="pointer-events:none;">
-        <div style="margin-bottom:8px;">📁 Drag & Drop Here</div>
-        <div style="font-size:12px; color:#0f0;">or click to choose file</div>
+  <!-- Radial / Scale controls -->
+  <div id="radialControls" class="control-panel active">
+    <h3>🎛️ Animation Controls</h3>
+    <div class="panel-content">
+      <label>Upload SVG or PNG:</label>
+      <div id="dropZone"
+        style="border:2px dashed #0f0; padding:20px; text-align:center; margin-bottom:10px; cursor:pointer; position:relative;">
+        <input type="file" id="svgUpload" accept=".svg,.png"
+          style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
+        <div style="pointer-events:none;">
+          <div style="margin-bottom:8px;">📁 Drag & Drop Here</div>
+          <div style="font-size:12px; color:#0f0;">or click to choose file</div>
+        </div>
+      </div>
+
+      <label>Radial Repeats:</label>
+      <div class="slider-container">
+        <input type="range" id="repeatCount" min="1" max="64" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Base Size (px):</label>
+      <div class="slider-container">
+        <input type="range" id="sizeSlider" min="50" max="500">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Radius (px):</label>
+      <div class="slider-container">
+        <input type="range" id="radiusSlider" min="0" max="500">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Composite Rotation Speed:</label>
+      <div class="slider-container">
+        <input type="range" id="compSpeed" min="-0.1" max="0.1" step="0.001">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Individual Spin Speed:</label>
+      <div class="slider-container">
+        <input type="range" id="indSpeed" min="-0.2" max="0.2" step="0.001">
+        <span class="slider-value"></span>
+      </div>
+
+      <label><input type="checkbox" id="scaleToggle"> Enable Scale Pulsation</label>
+      <label>Scale Rate:</label>
+      <div class="slider-container">
+        <input type="range" id="scaleRate" min="0" max="0.2" step="0.001">
+        <span class="slider-value"></span>
+      </div>
+      <label>Scale Amount:</label>
+      <div class="slider-container">
+        <input type="range" id="scaleAmp" min="0" max="1" step="0.01">
+        <span class="slider-value"></span>
+      </div>
+      <label><input type="checkbox" id="perItemScaleToggle"> Individual Scale Variation</label>
+
+      <label><input type="checkbox" id="radialToggle"> Enable Radial Oscillation</label>
+      <label>Oscillation Rate:</label>
+      <div class="slider-container">
+        <input type="range" id="radialRate" min="0" max="0.2" step="0.001">
+        <span class="slider-value"></span>
+      </div>
+      <label>Oscillation Amount (px):</label>
+      <div class="slider-container">
+        <input type="range" id="radialAmp" min="0" max="200" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Background:</label>
+      <input type="color" id="bgColorPicker">
+
+      <label><input type="checkbox" id="colorShiftToggle"> Hue-Shift</label>
+      <label>Hue Speed:</label>
+      <div class="slider-container">
+        <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
+        <span class="slider-value"></span>
+      </div>
+      <label>Hue Drift Speed:</label>
+      <div class="slider-container">
+        <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
+        <span class="slider-value"></span>
+      </div>
+
+      <button id="resetButton"
+        style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
+        All Settings</button>
+    </div>
+  </div>
+
+  <!-- Filter controls -->
+  <div id="filterControls" class="control-panel">
+    <h3>🎨 Filter Controls</h3>
+    <div class="panel-content">
+      <label><input type="checkbox" id="filterToggle"> Enable Filters</label>
+
+      <label>Brightness:</label>
+      <div class="slider-container">
+        <input type="range" id="brightnessFilter" min="0" max="200" value="100" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Contrast:</label>
+      <div class="slider-container">
+        <input type="range" id="contrastFilter" min="0" max="200" value="100" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Saturation:</label>
+      <div class="slider-container">
+        <input type="range" id="saturationFilter" min="0" max="200" value="100" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Blur:</label>
+      <div class="slider-container">
+        <input type="range" id="blurFilter" min="0" max="10" value="0" step="0.1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Sepia:</label>
+      <div class="slider-container">
+        <input type="range" id="sepiaFilter" min="0" max="100" value="0" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Invert:</label>
+      <div class="slider-container">
+        <input type="range" id="invertFilter" min="0" max="100" value="0" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Grayscale:</label>
+      <div class="slider-container">
+        <input type="range" id="grayscaleFilter" min="0" max="100" value="0" step="1">
+        <span class="slider-value"></span>
+      </div>
+
+      <label>Hue Rotate:</label>
+      <div class="slider-container">
+        <input type="range" id="hueRotateFilter" min="0" max="360" value="0" step="1">
+        <span class="slider-value"></span>
       </div>
     </div>
-
-    <label>Radial Repeats:</label>
-    <div class="slider-container">
-      <input type="range" id="repeatCount" min="1" max="64" step="1">
-      <span class="slider-value"></span>
-    </div>
-
-    <label>Base Size (px):</label>
-    <div class="slider-container">
-      <input type="range" id="sizeSlider" min="50" max="500">
-      <span class="slider-value"></span>
-    </div>
-
-    <label>Radius (px):</label>
-    <div class="slider-container">
-      <input type="range" id="radiusSlider" min="0" max="500">
-      <span class="slider-value"></span>
-    </div>
-
-    <label>Composite Rotation Speed:</label>
-    <div class="slider-container">
-      <input type="range" id="compSpeed" min="-0.1" max="0.1" step="0.001">
-      <span class="slider-value"></span>
-    </div>
-
-    <label>Individual Spin Speed:</label>
-    <div class="slider-container">
-      <input type="range" id="indSpeed" min="-0.2" max="0.2" step="0.001">
-      <span class="slider-value"></span>
-    </div>
-
-    <label><input type="checkbox" id="scaleToggle"> Enable Scale Pulsation</label>
-    <label>Scale Rate:</label>
-    <div class="slider-container">
-      <input type="range" id="scaleRate" min="0" max="0.2" step="0.001">
-      <span class="slider-value"></span>
-    </div>
-    <label>Scale Amount:</label>
-    <div class="slider-container">
-      <input type="range" id="scaleAmp" min="0" max="1" step="0.01">
-      <span class="slider-value"></span>
-    </div>
-    <label><input type="checkbox" id="perItemScaleToggle"> Individual Scale Variation</label>
-
-    <label><input type="checkbox" id="radialToggle"> Enable Radial Oscillation</label>
-    <label>Oscillation Rate:</label>
-    <div class="slider-container">
-      <input type="range" id="radialRate" min="0" max="0.2" step="0.001">
-      <span class="slider-value"></span>
-    </div>
-    <label>Oscillation Amount (px):</label>
-    <div class="slider-container">
-      <input type="range" id="radialAmp" min="0" max="200" step="1">
-      <span class="slider-value"></span>
-    </div>
-
-    <label>Background:</label>
-    <input type="color" id="bgColorPicker">
-
-    <label><input type="checkbox" id="colorShiftToggle"> Hue-Shift</label>
-    <label>Hue Speed:</label>
-    <div class="slider-container">
-      <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
-      <span class="slider-value"></span>
-    </div>
-    <label>Hue Drift Speed:</label>
-    <div class="slider-container">
-      <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
-      <span class="slider-value"></span>
-    </div>
-
-    <button id="resetButton"
-      style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
-      All Settings</button>
   </div>
 
   <!-- Audio controls -->
   <div id="audioControls" class="control-panel">
     <h3>🎧 Audio Controls</h3>
-    <label><input type="checkbox" id="audioToggle"> Audio Reactive</label>
-    <span class="small">(allow mic when prompted)</span>
+    <div class="panel-content">
+      <label><input type="checkbox" id="audioToggle"> Audio Reactive</label>
+      <span class="small">(allow mic when prompted)</span>
 
-    <label>Sensitivity:</label>
-    <input type="range" id="audioSens" min="0" max="5" step="0.1">
-    <label>Bass Boost:</label>
-    <input type="range" id="bassBoost" min="0" max="5" step="0.1">
-    <label>Mid Boost:</label>
-    <input type="range" id="midBoost" min="0" max="5" step="0.1">
-    <label>Treble Boost:</label>
-    <input type="range" id="trebBoost" min="0" max="5" step="0.1">
-    <label>Max Radius Mod (px):</label>
-    <input type="range" id="audioModMax" min="0" max="500" step="10">
+      <label>Sensitivity:</label>
+      <input type="range" id="audioSens" min="0" max="5" step="0.1">
+      <label>Bass Boost:</label>
+      <input type="range" id="bassBoost" min="0" max="5" step="0.1">
+      <label>Mid Boost:</label>
+      <input type="range" id="midBoost" min="0" max="5" step="0.1">
+      <label>Treble Boost:</label>
+      <input type="range" id="trebBoost" min="0" max="5" step="0.1">
+      <label>Max Radius Mod (px):</label>
+      <input type="range" id="audioModMax" min="0" max="500" step="10">
+    </div>
   </div>
 
   <script>
@@ -345,6 +498,17 @@
     const svgContainer = document.getElementById('svgContainer');
     const SETTINGS_KEY = 'radialAnimatorSettings';
 
+    // Add filter controls
+    const filterToggle = document.getElementById('filterToggle');
+    const brightnessFilter = document.getElementById('brightnessFilter');
+    const contrastFilter = document.getElementById('contrastFilter');
+    const saturationFilter = document.getElementById('saturationFilter');
+    const blurFilter = document.getElementById('blurFilter');
+    const sepiaFilter = document.getElementById('sepiaFilter');
+    const invertFilter = document.getElementById('invertFilter');
+    const grayscaleFilter = document.getElementById('grayscaleFilter');
+    const hueRotateFilter = document.getElementById('hueRotateFilter');
+
     // sensible defaults
     const D = {
       repeats: 16,
@@ -366,7 +530,17 @@
       midBoost: 1,
       trebBoost: 1,
       audioModMax: 100,
-      audioReactive: false
+      audioReactive: false,
+      // Filter defaults
+      filterEnabled: false,
+      brightness: 100,
+      contrast: 100,
+      saturation: 100,
+      blur: 0,
+      sepia: 0,
+      invert: 0,
+      grayscale: 0,
+      hueRotate: 0
     };
 
     function loadSettings() {
@@ -400,7 +574,16 @@
         midBoost: +midBoostIn.value,
         trebBoost: +trebBoostIn.value,
         audioModMax: +audioModMaxIn.value,
-        audioReactive: audioToggle.checked
+        audioReactive: audioToggle.checked,
+        filterEnabled: filterToggle.checked,
+        brightness: +brightnessFilter.value,
+        contrast: +contrastFilter.value,
+        saturation: +saturationFilter.value,
+        blur: +blurFilter.value,
+        sepia: +sepiaFilter.value,
+        invert: +invertFilter.value,
+        grayscale: +grayscaleFilter.value,
+        hueRotate: +hueRotateFilter.value
       };
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(obj));
     }
@@ -439,6 +622,17 @@
       document.querySelectorAll('input[type="range"], input[type="number"]').forEach(input => {
         updateValueDisplay(input);
       });
+
+      filterToggle.checked = D.filterEnabled;
+      brightnessFilter.value = D.brightness;
+      contrastFilter.value = D.contrast;
+      saturationFilter.value = D.saturation;
+      blurFilter.value = D.blur;
+      sepiaFilter.value = D.sepia;
+      invertFilter.value = D.invert;
+      grayscaleFilter.value = D.grayscale;
+      hueRotateFilter.value = D.hueRotate;
+      applyFilters();
     }
 
     function attachSaveListeners() {
@@ -710,6 +904,94 @@
         saveSettings();
       }
     });
+
+    function applyFilters() {
+      if (!filterToggle.checked) {
+        animContainer.style.filter = '';
+        return;
+      }
+
+      const filters = [
+        `brightness(${brightnessFilter.value}%)`,
+        `contrast(${contrastFilter.value}%)`,
+        `saturate(${saturationFilter.value}%)`,
+        `blur(${blurFilter.value}px)`,
+        `sepia(${sepiaFilter.value}%)`,
+        `invert(${invertFilter.value}%)`,
+        `grayscale(${grayscaleFilter.value}%)`,
+        `hue-rotate(${hueRotateFilter.value}deg)`
+      ];
+
+      animContainer.style.filter = filters.join(' ');
+    }
+
+    // Add filter event listeners
+    filterToggle.addEventListener('change', applyFilters);
+    brightnessFilter.addEventListener('input', applyFilters);
+    contrastFilter.addEventListener('input', applyFilters);
+    saturationFilter.addEventListener('input', applyFilters);
+    blurFilter.addEventListener('input', applyFilters);
+    sepiaFilter.addEventListener('input', applyFilters);
+    invertFilter.addEventListener('input', applyFilters);
+    grayscaleFilter.addEventListener('input', applyFilters);
+    hueRotateFilter.addEventListener('input', applyFilters);
+
+    // Add panel collapse functionality
+    document.querySelectorAll('.control-panel h3').forEach(header => {
+      header.addEventListener('click', (e) => {
+        // Only toggle collapse if clicking the header directly (not the arrow)
+        if (e.target === header || e.target === header.querySelector('::after')) {
+          const panel = header.closest('.control-panel');
+          panel.classList.toggle('collapsed');
+        }
+      });
+    });
+
+    // Initialize panels as expanded
+    document.querySelectorAll('.control-panel').forEach(panel => {
+      panel.classList.remove('collapsed');
+    });
+
+    // Add panel menu functionality
+    const menuButton = document.querySelector('.menu-button');
+    const panelMenu = document.querySelector('.panel-menu');
+    const menuItems = document.querySelectorAll('.panel-menu-item');
+    const panels = document.querySelectorAll('.control-panel');
+
+    menuButton.addEventListener('click', () => {
+      panelMenu.classList.toggle('active');
+    });
+
+    menuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const panelId = item.dataset.panel;
+
+        // Update menu items
+        menuItems.forEach(mi => mi.classList.remove('active'));
+        item.classList.add('active');
+
+        // Update panels
+        panels.forEach(panel => {
+          panel.classList.remove('active');
+          if (panel.id === panelId) {
+            panel.classList.add('active');
+          }
+        });
+
+        // Hide menu
+        panelMenu.classList.remove('active');
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!menuButton.contains(e.target) && !panelMenu.contains(e.target)) {
+        panelMenu.classList.remove('active');
+      }
+    });
+
+    // Set initial active panel
+    menuItems[0].classList.add('active');
   </script>
 
 </body>
