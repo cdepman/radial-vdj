@@ -92,9 +92,27 @@
       gap: 1.1rem;
     }
 
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1;
+      width: auto;
+    }
+
+    .slider-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 12px;
+    }
+
     input[type=range] {
       display: flex;
-      width: 25rem;
+      width: 15rem;
       height: 1.5rem;
       -webkit-appearance: none;
       background: linear-gradient(180deg, #8f813d, #706048, #7A702A);
@@ -105,7 +123,7 @@
     input[type=range]::-webkit-slider-runnable-track,
     input[type=range]::-moz-range-track {
       background: #222;
-      width: 24rem;
+      width: 14rem;
       height: 0.25rem;
       border-radius: 3rem;
       cursor: pointer;
@@ -115,7 +133,7 @@
 
     input[type=range]::-webkit-slider-runnable-track {
       background: #222;
-      width: 24rem;
+      width: 14rem;
       height: 0.25rem;
       margin: 0 0.5rem;
     }
@@ -193,41 +211,74 @@
     <input type="file" id="svgUpload" accept=".svg,.png" style="display:inline-block; width:auto;">
 
     <label>Radial Repeats:</label>
-    <input type="number" id="repeatCount" min="1" max="64">
+    <div class="slider-container">
+      <input type="range" id="repeatCount" min="1" max="64" step="1">
+      <span class="slider-value"></span>
+    </div>
 
     <label>Base Size (px):</label>
-    <input type="range" id="sizeSlider" min="50" max="500">
+    <div class="slider-container">
+      <input type="range" id="sizeSlider" min="50" max="500">
+      <span class="slider-value"></span>
+    </div>
 
     <label>Radius (px):</label>
-    <input type="range" id="radiusSlider" min="0" max="500">
+    <div class="slider-container">
+      <input type="range" id="radiusSlider" min="0" max="500">
+      <span class="slider-value"></span>
+    </div>
 
     <label>Composite Rotation Speed:</label>
-    <input type="range" id="compSpeed" min="-0.1" max="0.1" step="0.001">
+    <div class="slider-container">
+      <input type="range" id="compSpeed" min="-0.1" max="0.1" step="0.001">
+      <span class="slider-value"></span>
+    </div>
 
     <label>Individual Spin Speed:</label>
-    <input type="range" id="indSpeed" min="-0.2" max="0.2" step="0.001">
+    <div class="slider-container">
+      <input type="range" id="indSpeed" min="-0.2" max="0.2" step="0.001">
+      <span class="slider-value"></span>
+    </div>
 
     <label><input type="checkbox" id="scaleToggle"> Enable Scale Pulsation</label>
     <label>Scale Rate:</label>
-    <input type="range" id="scaleRate" min="0" max="0.2" step="0.001">
+    <div class="slider-container">
+      <input type="range" id="scaleRate" min="0" max="0.2" step="0.001">
+      <span class="slider-value"></span>
+    </div>
     <label>Scale Amount:</label>
-    <input type="range" id="scaleAmp" min="0" max="1" step="0.01">
+    <div class="slider-container">
+      <input type="range" id="scaleAmp" min="0" max="1" step="0.01">
+      <span class="slider-value"></span>
+    </div>
     <label><input type="checkbox" id="perItemScaleToggle"> Individual Scale Variation</label>
 
     <label><input type="checkbox" id="radialToggle"> Enable Radial Oscillation</label>
     <label>Oscillation Rate:</label>
-    <input type="range" id="radialRate" min="0" max="0.2" step="0.001">
+    <div class="slider-container">
+      <input type="range" id="radialRate" min="0" max="0.2" step="0.001">
+      <span class="slider-value"></span>
+    </div>
     <label>Oscillation Amount (px):</label>
-    <input type="range" id="radialAmp" min="0" max="200" step="1">
+    <div class="slider-container">
+      <input type="range" id="radialAmp" min="0" max="200" step="1">
+      <span class="slider-value"></span>
+    </div>
 
     <label>Background:</label>
     <input type="color" id="bgColorPicker">
 
     <label><input type="checkbox" id="colorShiftToggle"> Hue-Shift</label>
     <label>Hue Speed:</label>
-    <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
+    <div class="slider-container">
+      <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
+      <span class="slider-value"></span>
+    </div>
     <label>Hue Drift Speed:</label>
-    <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
+    <div class="slider-container">
+      <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
+      <span class="slider-value"></span>
+    </div>
 
     <button id="resetButton"
       style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
@@ -291,20 +342,20 @@
 
     // sensible defaults
     const D = {
-      repeats: 12,
-      size: 150,
-      radius: 200,
-      compSpeed: 0.005,
-      indSpeed: 0.05,
-      scaleRate: 0.02,
-      scaleAmt: 0.1,
-      perItemScale: false,
-      radialRate: 0.02,
-      radialAmt: 50,
+      repeats: 16,
+      size: 120,
+      radius: 180,
+      compSpeed: 0.01,
+      indSpeed: 0.03,
+      scaleRate: 0.05,
+      scaleAmt: 0.2,
+      perItemScale: true,
+      radialRate: 0.03,
+      radialAmt: 30,
       bgColor: '#111111',
-      hueMode: false,
-      hueSpeed: 0.2,
-      hueDriftSpeed: 0.2,
+      hueMode: true,
+      hueSpeed: 0.5,
+      hueDriftSpeed: 0.1,
       audioSens: 1,
       bassBoost: 1,
       midBoost: 1,
@@ -378,6 +429,11 @@
       radialToggle.checked = false;
       hueToggle.checked = false;
       audioToggle.checked = false;
+
+      // Update all value displays
+      document.querySelectorAll('input[type="range"], input[type="number"]').forEach(input => {
+        updateValueDisplay(input);
+      });
     }
 
     function attachSaveListeners() {
@@ -620,6 +676,20 @@
 
       requestAnimationFrame(animate);
     }
+
+    // Add value display updates
+    function updateValueDisplay(input) {
+      const valueDisplay = input.parentElement.querySelector('.slider-value');
+      if (valueDisplay) {
+        valueDisplay.textContent = input.value;
+      }
+    }
+
+    // Update all value displays on load
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(input => {
+      updateValueDisplay(input);
+      input.addEventListener('input', () => updateValueDisplay(input));
+    });
 
     // initialize
     loadSettings();
