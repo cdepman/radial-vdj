@@ -393,31 +393,31 @@
 
       <label>Brightness:</label>
       <div class="slider-container">
-        <input type="range" id="brightnessFilter" min="0" max="200" value="100" step="1">
+        <input type="range" id="brightnessFilter" min="0" max="200" value="110" step="1">
         <span class="slider-value"></span>
       </div>
 
       <label>Contrast:</label>
       <div class="slider-container">
-        <input type="range" id="contrastFilter" min="0" max="200" value="100" step="1">
+        <input type="range" id="contrastFilter" min="0" max="200" value="120" step="1">
         <span class="slider-value"></span>
       </div>
 
       <label>Saturation:</label>
       <div class="slider-container">
-        <input type="range" id="saturationFilter" min="0" max="200" value="100" step="1">
+        <input type="range" id="saturationFilter" min="0" max="200" value="130" step="1">
         <span class="slider-value"></span>
       </div>
 
       <label>Blur:</label>
       <div class="slider-container">
-        <input type="range" id="blurFilter" min="0" max="10" value="0" step="0.1">
+        <input type="range" id="blurFilter" min="0" max="10" value="0.5" step="0.1">
         <span class="slider-value"></span>
       </div>
 
       <label>Sepia:</label>
       <div class="slider-container">
-        <input type="range" id="sepiaFilter" min="0" max="100" value="0" step="1">
+        <input type="range" id="sepiaFilter" min="0" max="100" value="15" step="1">
         <span class="slider-value"></span>
       </div>
 
@@ -435,9 +435,13 @@
 
       <label>Hue Rotate:</label>
       <div class="slider-container">
-        <input type="range" id="hueRotateFilter" min="0" max="360" value="0" step="1">
+        <input type="range" id="hueRotateFilter" min="0" max="360" value="45" step="1">
         <span class="slider-value"></span>
       </div>
+
+      <button id="filterResetBtn"
+        style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
+        Filter Controls</button>
     </div>
   </div>
 
@@ -449,15 +453,38 @@
       <span class="small">(allow mic when prompted)</span>
 
       <label>Sensitivity:</label>
-      <input type="range" id="audioSens" min="0" max="5" step="0.1">
+      <div class="slider-container">
+        <input type="range" id="audioSens" min="0" max="5" step="0.1">
+        <span class="slider-value"></span>
+      </div>
+
       <label>Bass Boost:</label>
-      <input type="range" id="bassBoost" min="0" max="5" step="0.1">
+      <div class="slider-container">
+        <input type="range" id="bassBoost" min="0" max="5" step="0.1">
+        <span class="slider-value"></span>
+      </div>
+
       <label>Mid Boost:</label>
-      <input type="range" id="midBoost" min="0" max="5" step="0.1">
+      <div class="slider-container">
+        <input type="range" id="midBoost" min="0" max="5" step="0.1">
+        <span class="slider-value"></span>
+      </div>
+
       <label>Treble Boost:</label>
-      <input type="range" id="trebBoost" min="0" max="5" step="0.1">
+      <div class="slider-container">
+        <input type="range" id="trebBoost" min="0" max="5" step="0.1">
+        <span class="slider-value"></span>
+      </div>
+
       <label>Max Radius Mod (px):</label>
-      <input type="range" id="audioModMax" min="0" max="500" step="10">
+      <div class="slider-container">
+        <input type="range" id="audioModMax" min="0" max="500" step="10">
+        <span class="slider-value"></span>
+      </div>
+
+      <button id="audioResetBtn"
+        style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
+        Audio Controls</button>
     </div>
   </div>
 
@@ -532,15 +559,15 @@
       audioModMax: 100,
       audioReactive: false,
       // Filter defaults
-      filterEnabled: false,
-      brightness: 100,
-      contrast: 100,
-      saturation: 100,
-      blur: 0,
-      sepia: 0,
+      filterEnabled: true,
+      brightness: 110,
+      contrast: 120,
+      saturation: 130,
+      blur: 0.5,
+      sepia: 15,
       invert: 0,
       grayscale: 0,
-      hueRotate: 0
+      hueRotate: 45
     };
 
     function loadSettings() {
@@ -588,7 +615,8 @@
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(obj));
     }
 
-    function setDefaults() {
+    // Panel-specific reset functions
+    function resetRadialControls() {
       repeatCountIn.value = D.repeats;
       sizeSlider.value = D.size;
       radiusSlider.value = D.radius;
@@ -603,26 +631,11 @@
       hueToggle.checked = D.hueMode;
       hueSpeedIn.value = D.hueSpeed;
       hueDriftSpeedIn.value = D.hueDriftSpeed;
-      audioSensIn.value = D.audioSens;
-      bassBoostIn.value = D.bassBoost;
-      midBoostIn.value = D.midBoost;
-      trebBoostIn.value = D.trebBoost;
-      audioModMaxIn.value = D.audioModMax;
-      audioToggle.checked = D.audioReactive;
       document.body.style.background = D.bgColor;
+      updateValueDisplays();
+    }
 
-      // Reset all checkbox states
-      scaleToggle.checked = false;
-      perItemScaleToggle.checked = false;
-      radialToggle.checked = false;
-      hueToggle.checked = false;
-      audioToggle.checked = false;
-
-      // Update all value displays
-      document.querySelectorAll('input[type="range"], input[type="number"]').forEach(input => {
-        updateValueDisplay(input);
-      });
-
+    function resetFilterControls() {
       filterToggle.checked = D.filterEnabled;
       brightnessFilter.value = D.brightness;
       contrastFilter.value = D.contrast;
@@ -633,6 +646,30 @@
       grayscaleFilter.value = D.grayscale;
       hueRotateFilter.value = D.hueRotate;
       applyFilters();
+      updateValueDisplays();
+    }
+
+    function resetAudioControls() {
+      audioToggle.checked = D.audioReactive;
+      audioSensIn.value = D.audioSens;
+      bassBoostIn.value = D.bassBoost;
+      midBoostIn.value = D.midBoost;
+      trebBoostIn.value = D.trebBoost;
+      audioModMaxIn.value = D.audioModMax;
+      updateValueDisplays();
+    }
+
+    function updateValueDisplays() {
+      document.querySelectorAll('input[type="range"], input[type="number"]').forEach(input => {
+        updateValueDisplay(input);
+      });
+    }
+
+    // Update setDefaults to use the new reset functions
+    function setDefaults() {
+      resetRadialControls();
+      resetFilterControls();
+      resetAudioControls();
     }
 
     function attachSaveListeners() {
@@ -920,9 +957,9 @@
         `invert(${invertFilter.value}%)`,
         `grayscale(${grayscaleFilter.value}%)`,
         `hue-rotate(${hueRotateFilter.value}deg)`
-      ];
+      ].join(' ');
 
-      animContainer.style.filter = filters.join(' ');
+      animContainer.style.filter = filters;
     }
 
     // Add filter event listeners
@@ -992,8 +1029,11 @@
 
     // Set initial active panel
     menuItems[0].classList.add('active');
-  </script>
 
+    // Add reset button event listeners
+    document.getElementById('filterResetBtn').addEventListener('click', resetFilterControls);
+    document.getElementById('audioResetBtn').addEventListener('click', resetAudioControls);
+  </script>
 </body>
 
 </html>
