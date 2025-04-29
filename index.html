@@ -228,6 +228,10 @@
     <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
     <label>Hue Drift Speed:</label>
     <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
+
+    <button id="resetButton"
+      style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
+      All Settings</button>
   </div>
 
   <!-- Audio controls -->
@@ -367,6 +371,13 @@
       audioModMaxIn.value = D.audioModMax;
       audioToggle.checked = D.audioReactive;
       document.body.style.background = D.bgColor;
+
+      // Reset all checkbox states
+      scaleToggle.checked = false;
+      perItemScaleToggle.checked = false;
+      radialToggle.checked = false;
+      hueToggle.checked = false;
+      audioToggle.checked = false;
     }
 
     function attachSaveListeners() {
@@ -616,6 +627,14 @@
     loadSavedFile();
     attachSaveListeners();
     requestAnimationFrame(animate);
+
+    // Add reset button handler
+    document.getElementById('resetButton').addEventListener('click', () => {
+      if (confirm('Are you sure you want to reset all settings to default?')) {
+        setDefaults();
+        saveSettings();
+      }
+    });
   </script>
 
 </body>
