@@ -290,12 +290,12 @@
   <div class="menu-button">☰ Menu</div>
   <div class="panel-menu">
     <div class="panel-menu-item" data-panel="radialControls">🎛️ Animation Controls</div>
-    <div class="panel-menu-item" data-panel="filterControls">🎨 Filter Controls</div>
+    <div class="panel-menu-item" data-panel="filterControls">🎨 Appearance Controls</div>
     <div class="panel-menu-item" data-panel="audioControls">🎧 Audio Controls</div>
   </div>
 
   <!-- Radial / Scale controls -->
-  <div id="radialControls" class="control-panel active">
+  <div id="radialControls" class="control-panel">
     <h3>🎛️ Animation Controls</h3>
     <div class="panel-content">
       <label>Upload SVG or PNG:</label>
@@ -363,11 +363,24 @@
         <input type="range" id="radialAmp" min="0" max="200" step="1">
         <span class="slider-value"></span>
       </div>
+      <label><input type="checkbox" id="perItemRadialToggle"> Individual Radial Variation</label>
 
-      <label>Background:</label>
-      <input type="color" id="bgColorPicker">
+      <button id="radialResetBtn"
+        style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
+        Animation Controls</button>
+    </div>
+  </div>
 
-      <label><input type="checkbox" id="colorShiftToggle"> Hue-Shift</label>
+  <!-- Appearance controls -->
+  <div id="filterControls" class="control-panel">
+    <h3>🎨 Appearance Controls</h3>
+    <div class="panel-content">
+      <label><input type="checkbox" id="filterToggle"> Enable Filters</label>
+
+      <label>Background Color:</label>
+      <input type="color" id="bgColorPicker" style="width: 100%; margin-bottom: 10px;">
+
+      <label><input type="checkbox" id="hueToggle"> Enable Hue Shift</label>
       <label>Hue Speed:</label>
       <div class="slider-container">
         <input type="range" id="hueSpeed" min="0" max="5" step="0.1">
@@ -378,18 +391,6 @@
         <input type="range" id="hueDriftSpeed" min="-2" max="2" step="0.01" value="0.2">
         <span class="slider-value"></span>
       </div>
-
-      <button id="resetButton"
-        style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
-        All Settings</button>
-    </div>
-  </div>
-
-  <!-- Filter controls -->
-  <div id="filterControls" class="control-panel">
-    <h3>🎨 Filter Controls</h3>
-    <div class="panel-content">
-      <label><input type="checkbox" id="filterToggle"> Enable Filters</label>
 
       <label>Brightness:</label>
       <div class="slider-container">
@@ -441,7 +442,7 @@
 
       <button id="filterResetBtn"
         style="width: 100%; margin-top: 10px; padding: 8px; background: #0f0; color: #000; border: none; border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;">Reset
-        Filter Controls</button>
+        Appearance Controls</button>
     </div>
   </div>
 
@@ -510,7 +511,7 @@
     const radialAmpIn = document.getElementById('radialAmp');
 
     const bgPicker = document.getElementById('bgColorPicker');
-    const hueToggle = document.getElementById('colorShiftToggle');
+    const hueToggle = document.getElementById('hueToggle');
     const hueSpeedIn = document.getElementById('hueSpeed');
     const hueDriftSpeedIn = document.getElementById('hueDriftSpeed');
 
@@ -548,6 +549,7 @@
       perItemScale: true,
       radialRate: 0.03,
       radialAmt: 30,
+      perItemRadial: true,
       bgColor: '#111111',
       hueMode: true,
       hueSpeed: 0.5,
@@ -592,6 +594,7 @@
         perItemScale: perItemScaleToggle.checked,
         radialRate: +radialRateIn.value,
         radialAmt: +radialAmpIn.value,
+        perItemRadial: perItemRadialToggle.checked,
         bgColor: bgPicker.value,
         hueMode: hueToggle.checked,
         hueSpeed: +hueSpeedIn.value,
@@ -617,6 +620,7 @@
 
     // Panel-specific reset functions
     function resetRadialControls() {
+      // Reset to defaults without loading from localStorage
       repeatCountIn.value = D.repeats;
       sizeSlider.value = D.size;
       radiusSlider.value = D.radius;
@@ -627,15 +631,18 @@
       perItemScaleToggle.checked = D.perItemScale;
       radialRateIn.value = D.radialRate;
       radialAmpIn.value = D.radialAmt;
+      perItemRadialToggle.checked = D.perItemRadial;
       bgPicker.value = D.bgColor;
       hueToggle.checked = D.hueMode;
       hueSpeedIn.value = D.hueSpeed;
       hueDriftSpeedIn.value = D.hueDriftSpeed;
       document.body.style.background = D.bgColor;
       updateValueDisplays();
+      saveSettings(); // Save the reset values
     }
 
     function resetFilterControls() {
+      // Reset to defaults without loading from localStorage
       filterToggle.checked = D.filterEnabled;
       brightnessFilter.value = D.brightness;
       contrastFilter.value = D.contrast;
@@ -647,9 +654,11 @@
       hueRotateFilter.value = D.hueRotate;
       applyFilters();
       updateValueDisplays();
+      saveSettings(); // Save the reset values
     }
 
     function resetAudioControls() {
+      // Reset to defaults without loading from localStorage
       audioToggle.checked = D.audioReactive;
       audioSensIn.value = D.audioSens;
       bassBoostIn.value = D.bassBoost;
@@ -657,6 +666,7 @@
       trebBoostIn.value = D.trebBoost;
       audioModMaxIn.value = D.audioModMax;
       updateValueDisplays();
+      saveSettings(); // Save the reset values
     }
 
     function updateValueDisplays() {
@@ -851,16 +861,19 @@
       radOscAng += rRate;
       if (hueOn) hueAng = (hueAng + hueDr) % 360;
 
-      // uniform radial offset
-      const radialOffset = radialToggle.checked
-        ? rAmt * Math.sin(radOscAng)
-        : 0;
-
       const n = clones.length;
       const step = Math.PI * 2 / n;
       clones.forEach((c, i) => {
         // radius with uniform oscillation + audio
-        const rad = baseRad + audioLevel * +audioModMaxIn.value + radialOffset;
+        let rad = baseRad + audioLevel * +audioModMaxIn.value;
+        if (radialToggle.checked) {
+          const perItem = perItemRadialToggle.checked;
+          if (perItem) {
+            rad += rAmt * Math.sin(radOscAng + i * step);
+          } else {
+            rad += rAmt * Math.sin(radOscAng);
+          }
+        }
         const ang = i * step + compAng;
         const cx = animContainer.clientWidth / 2;
         const cy = animContainer.clientHeight / 2;
@@ -928,19 +941,16 @@
     });
 
     // initialize
-    loadSettings();
-    setDefaults();
+    setDefaults(); // Set defaults first
+    loadSettings(); // Then load any saved settings
     loadSavedFile();
     attachSaveListeners();
     requestAnimationFrame(animate);
 
-    // Add reset button handler
-    document.getElementById('resetButton').addEventListener('click', () => {
-      if (confirm('Are you sure you want to reset all settings to default?')) {
-        setDefaults();
-        saveSettings();
-      }
-    });
+    // Add reset button event listeners
+    document.getElementById('filterResetBtn').addEventListener('click', resetFilterControls);
+    document.getElementById('audioResetBtn').addEventListener('click', resetAudioControls);
+    document.getElementById('radialResetBtn').addEventListener('click', resetRadialControls);
 
     function applyFilters() {
       if (!filterToggle.checked) {
@@ -1029,10 +1039,6 @@
 
     // Set initial active panel
     menuItems[0].classList.add('active');
-
-    // Add reset button event listeners
-    document.getElementById('filterResetBtn').addEventListener('click', resetFilterControls);
-    document.getElementById('audioResetBtn').addEventListener('click', resetAudioControls);
   </script>
 </body>
 
