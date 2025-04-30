@@ -277,6 +277,31 @@
       top: 10px;
       left: 10px;
     }
+
+    .rotation-control {
+      margin: 8px 0;
+      padding: 8px;
+      background: rgba(0, 255, 0, 0.05);
+      border-radius: 4px;
+    }
+
+    .direction-control {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .direction-control label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .direction-control input[type="radio"] {
+      margin: 0;
+    }
   </style>
 </head>
 
@@ -327,16 +352,28 @@
         <span class="slider-value"></span>
       </div>
 
-      <label>Composite Rotation Speed:</label>
-      <div class="slider-container">
-        <input type="range" id="compSpeed" min="-0.1" max="0.1" step="0.001">
-        <span class="slider-value"></span>
+      <label>Composite Rotation:</label>
+      <div class="rotation-control">
+        <div class="direction-control">
+          <label><input type="radio" name="compDir" value="ccw" checked> ⟲ Counter-clockwise</label>
+          <label><input type="radio" name="compDir" value="cw"> ⟳ Clockwise</label>
+        </div>
+        <div class="slider-container">
+          <input type="range" id="compSpeed" min="0" max="0.1" step="0.001" value="0.01">
+          <span class="slider-value"></span>
+        </div>
       </div>
 
-      <label>Individual Spin Speed:</label>
-      <div class="slider-container">
-        <input type="range" id="indSpeed" min="-0.2" max="0.2" step="0.001">
-        <span class="slider-value"></span>
+      <label>Individual Spin:</label>
+      <div class="rotation-control">
+        <div class="direction-control">
+          <label><input type="radio" name="indDir" value="ccw" checked> ⟲ Counter-clockwise</label>
+          <label><input type="radio" name="indDir" value="cw"> ⟳ Clockwise</label>
+        </div>
+        <div class="slider-container">
+          <input type="range" id="indSpeed" min="0" max="0.2" step="0.001" value="0.03">
+          <span class="slider-value"></span>
+        </div>
       </div>
 
       <label><input type="checkbox" id="scaleToggle"> Enable Scale Pulsation</label>
@@ -733,25 +770,34 @@
           localStorage.setItem('savedFileData', ev.target.result);
         } else if (ext === 'png') {
           const img = new Image();
+          img.onload = () => {
+            svgContainer.innerHTML = '';
+            svgContainer.appendChild(img);
+            sourceSvg = img;
+            vbW = img.naturalWidth || img.width || 100;
+            vbH = img.naturalHeight || img.height || 100;
+            localStorage.setItem('savedFileType', 'png');
+            localStorage.setItem('savedFileData', ev.target.result);
+            compAng = scaleAng = hueAng = radOscAng = 0;
+            buildMonads();
+            if (!running) {
+              running = true;
+              requestAnimationFrame(animate);
+            }
+          };
           img.src = ev.target.result;
           img.style.display = 'block';
-          svgContainer.innerHTML = '';
-          svgContainer.appendChild(img);
-          sourceSvg = img;
-          vbW = img.width || 100;
-          vbH = img.height || 100;
-          localStorage.setItem('savedFileType', 'png');
-          localStorage.setItem('savedFileData', ev.target.result);
         } else {
           alert('Unsupported file type!');
           return;
         }
-        compAng = scaleAng = hueAng = radOscAng = 0;
-        setDefaults();
-        buildMonads();
-        if (!running) {
-          running = true;
-          requestAnimationFrame(animate);
+        if (ext === 'svg') {
+          compAng = scaleAng = hueAng = radOscAng = 0;
+          buildMonads();
+          if (!running) {
+            running = true;
+            requestAnimationFrame(animate);
+          }
         }
       };
       if (ext === 'svg') r.readAsText(f);
@@ -775,16 +821,20 @@
         vbH = vb.height || svg.clientHeight;
       } else {
         const img = new Image();
+        img.onload = () => {
+          svgContainer.appendChild(img);
+          sourceSvg = img;
+          vbW = img.naturalWidth || img.width || 100;
+          vbH = img.naturalHeight || img.height || 100;
+          buildMonads();
+        };
         img.src = data;
         img.style.display = 'block';
-        svgContainer.appendChild(img);
-        sourceSvg = img;
-        vbW = img.width || 100;
-        vbH = img.height || 100;
       }
       compAng = scaleAng = hueAng = radOscAng = 0;
-      setDefaults();
-      buildMonads();
+      if (type === 'svg') {
+        buildMonads();
+      }
       if (!running) {
         running = true;
         requestAnimationFrame(animate);
@@ -833,8 +883,10 @@
     function animate() {
       const baseSize = +sizeSlider.value;
       const baseRad = +radiusSlider.value;
-      const compSpd = +compSpeedIn.value;
-      const indSpd = +indSpeedIn.value;
+      const compDir = document.querySelector('input[name="compDir"]:checked').value;
+      const indDir = document.querySelector('input[name="indDir"]:checked').value;
+      const compSpd = +compSpeedIn.value * (compDir === 'ccw' ? -1 : 1);
+      const indSpd = +indSpeedIn.value * (indDir === 'ccw' ? -1 : 1);
       const sRate = +scaleRateIn.value;
       const sAmt = +scaleAmpIn.value;
       const rRate = +radialRateIn.value;
@@ -1043,6 +1095,65 @@
 
     // Set initial active panel
     menuItems[0].classList.add('active');
+
+    function updateRotation() {
+      const compDir = document.querySelector('input[name="compDir"]:checked').value;
+      const indDir = document.querySelector('input[name="indDir"]:checked').value;
+      const compSpeed = parseFloat(document.getElementById('compSpeed').value);
+      const indSpeed = parseFloat(document.getElementById('indSpeed').value);
+
+      // Update composite rotation
+      if (compDir === 'none') {
+        compositeRotation = 0;
+      } else {
+        compositeRotation = compDir === 'ccw' ? compSpeed : -compSpeed;
+      }
+
+      // Update individual spin
+      if (indDir === 'none') {
+        individualSpin = 0;
+      } else {
+        individualSpin = indDir === 'ccw' ? indSpeed : -indSpeed;
+      }
+
+      updateSliderValues();
+    }
+
+    function updateSliderValues() {
+      const sliders = document.querySelectorAll('.slider-container');
+      sliders.forEach(container => {
+        const slider = container.querySelector('input[type="range"]');
+        const display = container.querySelector('.slider-value');
+        if (slider.id === 'radiusSlider') {
+          display.textContent = slider.value + 'px';
+        } else if (slider.id === 'compSpeed' || slider.id === 'indSpeed') {
+          display.textContent = slider.value;
+        }
+      });
+    }
+
+    // Event listeners
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+      slider.addEventListener('input', () => {
+        if (slider.id === 'radiusSlider') {
+          radius = parseFloat(slider.value);
+        } else {
+          updateRotation();
+        }
+        updateSliderValues();
+      });
+    });
+
+    document.querySelectorAll('input[name="compDir"], input[name="indDir"]').forEach(radio => {
+      radio.addEventListener('change', updateRotation);
+    });
+
+    document.getElementById('scaleToggle').addEventListener('change', function () {
+      enableScalePulsation = this.checked;
+    });
+
+    // Initialize slider values
+    updateSliderValues();
   </script>
 </body>
 
