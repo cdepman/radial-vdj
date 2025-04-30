@@ -1079,7 +1079,12 @@
     // initialize
     setDefaults(); // Set defaults first
     loadSettings(); // Then load any saved settings
-    loadSavedFile();
+    if (!localStorage.getItem('savedFileType')) {
+      // Load Takashi as the default example if nothing is saved
+      loadExampleAsset('image_assets/takashi.svg', 'Takashi');
+    } else {
+      loadSavedFile();
+    }
     attachSaveListeners();
     requestAnimationFrame(animate);
 
