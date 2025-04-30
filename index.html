@@ -321,14 +321,15 @@
   <!-- Menu Button -->
   <div class="menu-button">☰ Menu</div>
   <div class="panel-menu">
+    <div class="panel-menu-item" data-panel="imageAssetControls">🖼️ Image Asset Controls</div>
     <div class="panel-menu-item" data-panel="radialControls">🎛️ Animation Controls</div>
     <div class="panel-menu-item" data-panel="filterControls">🎨 Appearance Controls</div>
     <div class="panel-menu-item" data-panel="audioControls">🎧 Audio Controls</div>
   </div>
 
-  <!-- Radial / Scale controls -->
-  <div id="radialControls" class="control-panel">
-    <h3>🎛️ Animation Controls</h3>
+  <!-- Image Asset controls -->
+  <div id="imageAssetControls" class="control-panel">
+    <h3>🖼️ Image Asset Controls</h3>
     <div class="panel-content">
       <label>Upload SVG or PNG:</label>
       <div id="dropZone"
@@ -338,14 +339,6 @@
         <div id="dropZoneContent" style="pointer-events:none;">
           <div style="margin-bottom:8px;">📁 Drag & Drop Here</div>
           <div style="font-size:12px; color:#0f0;">or click to choose file</div>
-          <div id="exampleAssets" style="margin-top:12px; pointer-events:auto;">
-            <div style="font-size:12px; color:#0f0; margin-bottom:4px;">Examples:</div>
-            <button class="example-btn" data-example="rubber-duck.png"
-              style="margin:2px; padding:4px 10px; background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; cursor:pointer;">Rubber
-              Duck</button>
-            <button class="example-btn" data-example="takashi.svg"
-              style="margin:2px; padding:4px 10px; background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; cursor:pointer;">Takashi</button>
-          </div>
         </div>
         <div id="fileInfo"
           style="display:none; flex-direction:column; align-items:center; gap:6px; pointer-events:auto;">
@@ -355,7 +348,17 @@
             style="background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; padding:4px 10px; cursor:pointer; margin-top:4px; width:100px;">Unmount</button>
         </div>
       </div>
+      <div id="examplesSection" style="margin-top:12px;">
+        <label style="font-size:12px; color:#0f0;">Examples:</label>
+        <div id="examplesList" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
 
+  <!-- Radial / Scale controls -->
+  <div id="radialControls" class="control-panel">
+    <h3>🎛️ Animation Controls</h3>
+    <div class="panel-content">
       <label>Radial Repeats:</label>
       <div class="slider-container">
         <input type="range" id="repeatCount" min="1" max="64" step="1">
@@ -1291,6 +1294,72 @@
         localStorage.removeItem('savedFileData');
       });
     });
+
+    function loadExampleAsset(filename, label) {
+      const ext = filename.split('.').pop().toLowerCase();
+      loadedFileName = label;
+      if (ext === 'svg') {
+        fetch(filename)
+          .then(res => res.text())
+          .then(data => {
+            const doc = new DOMParser().parseFromString(data, 'image/svg+xml');
+            const svg = doc.querySelector('svg');
+            if (!svg) return alert('Invalid SVG!');
+            svgContainer.innerHTML = '';
+            svgContainer.appendChild(svg);
+            sourceSvg = svg;
+            const vb = svg.viewBox.baseVal;
+            vbW = vb.width || svg.clientWidth;
+            vbH = vb.height || svg.clientHeight;
+            localStorage.setItem('savedFileType', 'svg');
+            localStorage.setItem('savedFileData', data);
+            compAng = scaleAng = hueAng = radOscAng = 0;
+            buildMonads();
+            if (!running) {
+              running = true;
+              requestAnimationFrame(animate);
+            }
+            updateDropZoneUI();
+          });
+      } else if (ext === 'png') {
+        const img = new Image();
+        img.onload = () => {
+          svgContainer.innerHTML = '';
+          svgContainer.appendChild(img);
+          sourceSvg = img;
+          vbW = img.naturalWidth || img.width || 100;
+          vbH = img.naturalHeight || img.height || 100;
+          localStorage.setItem('savedFileType', 'png');
+          localStorage.setItem('savedFileData', img.src);
+          compAng = scaleAng = hueAng = radOscAng = 0;
+          buildMonads();
+          if (!running) {
+            running = true;
+            requestAnimationFrame(animate);
+          }
+          updateDropZoneUI();
+        };
+        img.src = filename;
+      }
+    }
+
+    // Populate examples
+    function populateExamples() {
+      const examples = [
+        { file: 'image_assets/rubber-duck.png', label: 'Rubber Duck' },
+        { file: 'image_assets/takashi.svg', label: 'Takashi' }
+      ];
+      const examplesList = document.getElementById('examplesList');
+      examplesList.innerHTML = '';
+      examples.forEach(ex => {
+        const btn = document.createElement('button');
+        btn.textContent = ex.label;
+        btn.style.cssText = 'background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; padding:4px 10px; cursor:pointer; width:140px; margin-bottom:2px;';
+        btn.addEventListener('click', () => loadExampleAsset(ex.file, ex.label));
+        examplesList.appendChild(btn);
+      });
+    }
+    populateExamples();
   </script>
 </body>
 
