@@ -592,17 +592,19 @@
 
     // sensible defaults
     const D = {
-      repeats: 16,
-      size: 120,
-      radius: 180,
-      compSpeed: 0.01,
-      indSpeed: 0.03,
-      scaleRate: 0.05,
-      scaleAmt: 0.2,
+      repeats: 25,
+      size: 151,
+      radius: 156,
+      compSpeed: 0.015,
+      indSpeed: -0.013,
+      scaleRate: 0.005,
+      scaleAmt: 0.65,
       perItemScale: true,
-      radialRate: 0.03,
-      radialAmt: 30,
-      perItemRadial: true,
+      scaleToggle: true,
+      radialRate: 0.004,
+      radialAmt: 96,
+      radialToggle: true,
+      perItemRadial: false,
       bgColor: '#111111',
       hueMode: true,
       hueSpeed: 0.5,
@@ -645,8 +647,10 @@
         scaleRate: +scaleRateIn.value,
         scaleAmt: +scaleAmpIn.value,
         perItemScale: perItemScaleToggle.checked,
+        scaleToggle: scaleToggle.checked,
         radialRate: +radialRateIn.value,
         radialAmt: +radialAmpIn.value,
+        radialToggle: radialToggle.checked,
         perItemRadial: perItemRadialToggle.checked,
         bgColor: bgPicker.value,
         hueMode: hueToggle.checked,
@@ -682,8 +686,10 @@
       scaleRateIn.value = D.scaleRate;
       scaleAmpIn.value = D.scaleAmt;
       perItemScaleToggle.checked = D.perItemScale;
+      scaleToggle.checked = D.scaleToggle;
       radialRateIn.value = D.radialRate;
       radialAmpIn.value = D.radialAmt;
+      radialToggle.checked = D.radialToggle;
       perItemRadialToggle.checked = D.perItemRadial;
       bgPicker.value = D.bgColor;
       hueToggle.checked = D.hueMode;
@@ -903,7 +909,7 @@
         sourceSvg = img;
         vbW = img.naturalWidth || img.width || 100;
         vbH = img.naturalHeight || img.height || 100;
-        loadedFileName = 'rubber-duck.png';
+        loadedFileName = 'blue-dragon.svg';
         buildMonads();
         updateDropZoneUI();
         if (!running) {
@@ -911,7 +917,7 @@
           requestAnimationFrame(animate);
         }
       };
-      img.src = 'image_assets/rubber-duck.png';
+      img.src = 'image_assets/blue-dragon.svg';
       img.style.display = 'block';
     }
 
@@ -1285,6 +1291,52 @@
     function loadExampleAsset(filename, label) {
       const ext = filename.split('.').pop().toLowerCase();
       loadedFileName = label;
+      // Example-specific presets
+      const examplePresets = {
+        'Takashi': {
+          repeats: 64,
+          size: 340,
+          radius: 108,
+          compSpeed: 0.015,
+          indSpeed: 0,
+          scaleToggle: true,
+          scaleRate: 0.005,
+          scaleAmt: 0.65,
+          perItemScale: true,
+          radialToggle: true,
+          radialRate: 0.004,
+          radialAmt: 96,
+          perItemRadial: false,
+          bgColor: '#111111',
+          hueMode: true,
+          hueSpeed: 0.5,
+          hueDriftSpeed: 0.1
+        }
+        // Add more presets for other examples if desired
+      };
+      const preset = examplePresets[label] || D;
+      // Apply preset to controls
+      repeatCountIn.value = preset.repeats;
+      sizeSlider.value = preset.size;
+      radiusSlider.value = preset.radius;
+      compSpeedIn.value = preset.compSpeed;
+      indSpeedIn.value = preset.indSpeed;
+      scaleToggle.checked = preset.scaleToggle;
+      scaleRateIn.value = preset.scaleRate;
+      scaleAmpIn.value = preset.scaleAmt;
+      perItemScaleToggle.checked = preset.perItemScale;
+      radialToggle.checked = preset.radialToggle;
+      radialRateIn.value = preset.radialRate;
+      radialAmpIn.value = preset.radialAmt;
+      perItemRadialToggle.checked = preset.perItemRadial;
+      bgPicker.value = preset.bgColor;
+      hueToggle.checked = preset.hueMode;
+      hueSpeedIn.value = preset.hueSpeed;
+      hueDriftSpeedIn.value = preset.hueDriftSpeed;
+      document.body.style.background = preset.bgColor;
+      updateValueDisplays();
+      saveSettings();
+      // Now load the asset
       if (ext === 'svg') {
         fetch(filename)
           .then(res => res.text())
@@ -1333,6 +1385,7 @@
     // Populate examples
     function populateExamples() {
       const examples = [
+        { file: 'image_assets/blue-dragon.svg', label: 'Blue Dragon' },
         { file: 'image_assets/rubber-duck.png', label: 'Rubber Duck' },
         { file: 'image_assets/takashi.svg', label: 'Takashi' }
       ];
