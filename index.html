@@ -302,6 +302,13 @@
     .direction-control input[type="radio"] {
       margin: 0;
     }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid #0f0;
+      margin: 16px 0 8px 0;
+      opacity: 0.25;
+    }
   </style>
 </head>
 
@@ -328,9 +335,24 @@
         style="border:2px dashed #0f0; padding:20px; text-align:center; margin-bottom:10px; cursor:pointer; position:relative;">
         <input type="file" id="svgUpload" accept=".svg,.png"
           style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
-        <div style="pointer-events:none;">
+        <div id="dropZoneContent" style="pointer-events:none;">
           <div style="margin-bottom:8px;">📁 Drag & Drop Here</div>
           <div style="font-size:12px; color:#0f0;">or click to choose file</div>
+          <div id="exampleAssets" style="margin-top:12px; pointer-events:auto;">
+            <div style="font-size:12px; color:#0f0; margin-bottom:4px;">Examples:</div>
+            <button class="example-btn" data-example="rubber-duck.png"
+              style="margin:2px; padding:4px 10px; background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; cursor:pointer;">Rubber
+              Duck</button>
+            <button class="example-btn" data-example="takashi.svg"
+              style="margin:2px; padding:4px 10px; background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; cursor:pointer;">Takashi</button>
+          </div>
+        </div>
+        <div id="fileInfo"
+          style="display:none; flex-direction:column; align-items:center; gap:6px; pointer-events:auto;">
+          <span id="fileName"
+            style="color:#0f0; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;"></span>
+          <button id="unmountBtn"
+            style="background:#222; color:#0f0; border:1px solid #0f0; border-radius:4px; padding:4px 10px; cursor:pointer; margin-top:4px; width:100px;">Unmount</button>
         </div>
       </div>
 
@@ -352,11 +374,12 @@
         <span class="slider-value"></span>
       </div>
 
+      <hr class="section-divider">
       <label>Composite Rotation:</label>
       <div class="rotation-control">
         <div class="direction-control">
-          <label><input type="radio" name="compDir" value="ccw" checked> ⟲ Counter-clockwise</label>
-          <label><input type="radio" name="compDir" value="cw"> ⟳ Clockwise</label>
+          <label><input type="radio" name="compDir" value="ccw" checked> Counter-clockwise</label>
+          <label><input type="radio" name="compDir" value="cw"> Clockwise</label>
         </div>
         <div class="slider-container">
           <input type="range" id="compSpeed" min="0" max="0.1" step="0.001" value="0.01">
@@ -367,8 +390,8 @@
       <label>Individual Spin:</label>
       <div class="rotation-control">
         <div class="direction-control">
-          <label><input type="radio" name="indDir" value="ccw" checked> ⟲ Counter-clockwise</label>
-          <label><input type="radio" name="indDir" value="cw"> ⟳ Clockwise</label>
+          <label><input type="radio" name="indDir" value="ccw" checked> Counter-clockwise</label>
+          <label><input type="radio" name="indDir" value="cw"> Clockwise</label>
         </div>
         <div class="slider-container">
           <input type="range" id="indSpeed" min="0" max="0.2" step="0.001" value="0.03">
@@ -376,6 +399,7 @@
         </div>
       </div>
 
+      <hr class="section-divider">
       <label><input type="checkbox" id="scaleToggle"> Enable Scale Pulsation</label>
       <label>Scale Rate:</label>
       <div class="slider-container">
@@ -389,6 +413,7 @@
       </div>
       <label><input type="checkbox" id="perItemScaleToggle"> Individual Scale Variation</label>
 
+      <hr class="section-divider">
       <label><input type="checkbox" id="radialToggle"> Enable Radial Oscillation</label>
       <label>Oscillation Rate:</label>
       <div class="slider-container">
@@ -530,6 +555,7 @@
     // === Globals & DOM refs ===
     let sourceSvg = null, vbW = 1, vbH = 1;
     let clones = [], compAng = 0, scaleAng = 0, hueAng = 0, radOscAng = 0, running = false;
+    let loadedFileName = null;
 
     const svgUpload = document.getElementById('svgUpload');
     const repeatCountIn = document.getElementById('repeatCount');
@@ -753,6 +779,7 @@
     });
 
     function handleFile(f) {
+      loadedFileName = f.name;
       const ext = f.name.split('.').pop().toLowerCase();
       const r = new FileReader();
       r.onload = ev => {
@@ -803,12 +830,48 @@
       if (ext === 'svg') r.readAsText(f);
       else if (ext === 'png') r.readAsDataURL(f);
       else alert('Unsupported file type!');
+      updateDropZoneUI();
     }
+
+    function updateDropZoneUI() {
+      const dropZoneContent = document.getElementById('dropZoneContent');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const svgUpload = document.getElementById('svgUpload');
+      if (loadedFileName) {
+        dropZoneContent.style.display = 'none';
+        fileInfo.style.display = 'flex';
+        fileName.textContent = loadedFileName;
+        svgUpload.style.display = 'none';
+      } else {
+        dropZoneContent.style.display = 'block';
+        fileInfo.style.display = 'none';
+        fileName.textContent = '';
+        svgUpload.style.display = 'block';
+      }
+    }
+
+    document.getElementById('unmountBtn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      svgContainer.innerHTML = '';
+      sourceSvg = null;
+      loadedFileName = null;
+      localStorage.removeItem('savedFileType');
+      localStorage.removeItem('savedFileData');
+      clones = [];
+      animContainer.innerHTML = '';
+      updateDropZoneUI();
+    });
 
     function loadSavedFile() {
       const type = localStorage.getItem('savedFileType');
       const data = localStorage.getItem('savedFileData');
-      if (!type || !data) return;
+      if (!type || !data) {
+        // No saved file, load default example
+        loadDefaultExample();
+        return;
+      }
+      loadedFileName = 'Loaded from previous session';
       svgContainer.innerHTML = '';
       if (type === 'svg') {
         const doc = new DOMParser().parseFromString(data, 'image/svg+xml');
@@ -839,6 +902,27 @@
         running = true;
         requestAnimationFrame(animate);
       }
+      updateDropZoneUI();
+    }
+
+    function loadDefaultExample() {
+      const img = new Image();
+      img.onload = () => {
+        svgContainer.innerHTML = '';
+        svgContainer.appendChild(img);
+        sourceSvg = img;
+        vbW = img.naturalWidth || img.width || 100;
+        vbH = img.naturalHeight || img.height || 100;
+        loadedFileName = 'rubber-duck.png';
+        buildMonads();
+        updateDropZoneUI();
+        if (!running) {
+          running = true;
+          requestAnimationFrame(animate);
+        }
+      };
+      img.src = 'image_assets/rubber-duck.png';
+      img.style.display = 'block';
     }
 
     repeatCountIn.addEventListener('input', () => {
@@ -1154,6 +1238,59 @@
 
     // Initialize slider values
     updateSliderValues();
+
+    // Example asset loader
+    document.querySelectorAll('.example-btn').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const filename = btn.getAttribute('data-example');
+        if (filename.endsWith('.svg')) {
+          fetch(`image_assets/${filename}`)
+            .then(res => res.text())
+            .then(svgText => {
+              const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+              const svg = doc.querySelector('svg');
+              if (!svg) return alert('Invalid SVG!');
+              svgContainer.innerHTML = '';
+              svgContainer.appendChild(svg);
+              sourceSvg = svg;
+              const vb = svg.viewBox.baseVal;
+              vbW = vb.width || svg.clientWidth;
+              vbH = vb.height || svg.clientHeight;
+              loadedFileName = filename;
+              compAng = scaleAng = hueAng = radOscAng = 0;
+              buildMonads();
+              updateDropZoneUI();
+              if (!running) {
+                running = true;
+                requestAnimationFrame(animate);
+              }
+            });
+        } else {
+          const img = new Image();
+          img.onload = () => {
+            svgContainer.innerHTML = '';
+            svgContainer.appendChild(img);
+            sourceSvg = img;
+            vbW = img.naturalWidth || img.width || 100;
+            vbH = img.naturalHeight || img.height || 100;
+            loadedFileName = filename;
+            compAng = scaleAng = hueAng = radOscAng = 0;
+            buildMonads();
+            updateDropZoneUI();
+            if (!running) {
+              running = true;
+              requestAnimationFrame(animate);
+            }
+          };
+          img.src = `image_assets/${filename}`;
+          img.style.display = 'block';
+        }
+        // Clear localStorage so example is not persisted
+        localStorage.removeItem('savedFileType');
+        localStorage.removeItem('savedFileData');
+      });
+    });
   </script>
 </body>
 
