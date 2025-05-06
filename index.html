@@ -231,6 +231,31 @@
       background: rgba(0, 255, 0, 0.1);
     }
 
+    .play-pause-button {
+      position: fixed;
+      top: 10px;
+      right: 150px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid #0f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #0f0;
+      cursor: pointer;
+      z-index: 1001;
+      font-family: 'Courier New', monospace;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    .play-pause-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+    }
+
+    .play-pause-button.paused {
+      color: #f00;
+      border-color: #f00;
+      box-shadow: 0 0 10px #f00;
+    }
+
     .panel-menu {
       position: fixed;
       top: 50px;
@@ -307,6 +332,7 @@
 
   <!-- Menu Button -->
   <div class="menu-button">☰ Menu</div>
+  <div class="play-pause-button">⏸️ Pause</div>
   <div class="panel-menu">
     <div class="panel-menu-item" data-panel="imageAssetControls">🖼️ Image Asset Controls</div>
     <div class="panel-menu-item" data-panel="radialControls">🎛️ Animation Controls</div>
@@ -546,6 +572,14 @@
     let sourceSvg = null, vbW = 1, vbH = 1;
     let clones = [], compAng = 0, scaleAng = 0, hueAng = 0, radOscAng = 0, running = false;
     let loadedFileName = null;
+    let isPaused = false;
+    let animationFrameId = null;
+    let lastFrameTime = 0;
+    let frameCount = 0;
+    let lastFPSUpdate = 0;
+    let currentFPS = 0;
+    let accumulator = 0;
+    const FIXED_TIME_STEP = 1000 / 60; // 60 FPS
 
     const svgUpload = document.getElementById('svgUpload');
     const repeatCountIn = document.getElementById('repeatCount');
@@ -960,106 +994,126 @@
     });
 
     // main animation loop
-    function animate() {
-      const baseSize = +sizeSlider.value;
-      const baseRad = +radiusSlider.value;
-      const compDir = document.querySelector('input[name="compDir"]:checked').value;
-      const indDir = document.querySelector('input[name="indDir"]:checked').value;
-      const compSpd = +compSpeedIn.value * (compDir === 'ccw' ? -1 : 1);
-      const indSpd = +indSpeedIn.value * (indDir === 'ccw' ? -1 : 1);
-      const sRate = +scaleRateIn.value;
-      const sAmt = +scaleAmpIn.value;
-      const rRate = +radialRateIn.value;
-      const rAmt = +radialAmpIn.value;
-      const bg = bgPicker.value;
-      const hueOn = hueToggle.checked;
-      const hueDr = +hueDriftSpeedIn.value;
+    function animate(timestamp) {
+      if (isPaused) return;
 
-      // audio processing
-      let audioLevel = 0;
-      if (audioToggle.checked && analyser) {
-        analyser.getByteFrequencyData(freqData);
-        const len = freqData.length;
-        const third = Math.floor(len / 3);
-        const bass = freqData.slice(0, third).reduce((a, v) => a + v, 0) / third;
-        const mid = freqData.slice(third, 2 * third).reduce((a, v) => a + v, 0) / third;
-        const treb = freqData.slice(2 * third).reduce((a, v) => a + v, 0) / (len - 2 * third);
-        const totalW = +bassBoostIn.value + +midBoostIn.value + +trebBoostIn.value;
-        const weighted = bass * +bassBoostIn.value + mid * +midBoostIn.value + treb * +trebBoostIn.value;
-        audioLevel = (weighted / 255 / totalW) * +audioSensIn.value;
+      // FPS calculation
+      frameCount++;
+      if (timestamp - lastFPSUpdate >= 1000) {
+        currentFPS = frameCount;
+        frameCount = 0;
+        lastFPSUpdate = timestamp;
       }
 
-      document.body.style.background = bg;
-      compAng += compSpd;
-      scaleAng += sRate;
-      radOscAng += rRate;
-      if (hueOn) hueAng = (hueAng + hueDr) % 360;
+      // Calculate frame delta and accumulate time
+      const deltaTime = Math.min(timestamp - lastFrameTime, 32); // Cap at 32ms to prevent spiral of death
+      lastFrameTime = timestamp;
+      accumulator += deltaTime;
 
-      const n = clones.length;
-      const step = Math.PI * 2 / n;
-      clones.forEach((c, i) => {
-        // radius with uniform oscillation + audio
-        let rad = baseRad + audioLevel * +audioModMaxIn.value;
-        if (radialToggle.checked) {
-          const perItem = perItemRadialToggle.checked;
-          if (perItem) {
-            // Golden angle for more even distribution
-            const goldenAngle = 2.399963229728653;
-            rad += rAmt * Math.sin(radOscAng + i * goldenAngle);
-          } else {
-            rad += rAmt * Math.sin(radOscAng);
-          }
-        }
-        const ang = i * step + compAng;
-        const cx = animContainer.clientWidth / 2;
-        const cy = animContainer.clientHeight / 2;
-        const x = cx + rad * Math.cos(ang);
-        const y = cy + rad * Math.sin(ang);
+      // Update physics with fixed time step
+      while (accumulator >= FIXED_TIME_STEP) {
+        const baseSize = +sizeSlider.value;
+        const baseRad = +radiusSlider.value;
+        const compDir = document.querySelector('input[name="compDir"]:checked').value;
+        const indDir = document.querySelector('input[name="indDir"]:checked').value;
+        const compSpd = +compSpeedIn.value * (compDir === 'ccw' ? -1 : 1);
+        const indSpd = +indSpeedIn.value * (indDir === 'ccw' ? -1 : 1);
+        const sRate = +scaleRateIn.value;
+        const sAmt = +scaleAmpIn.value;
+        const rRate = +radialRateIn.value;
+        const rAmt = +radialAmpIn.value;
+        const bg = bgPicker.value;
+        const hueOn = hueToggle.checked;
+        const hueDr = +hueDriftSpeedIn.value;
 
-        c.ang += indSpd;
-
-        // scale pulsation (uniform vs per-item)
-        let scale = 1;
-        if (scaleToggle.checked) {
-          const perItem = perItemScaleToggle.checked;
-          if (perItem) {
-            scale = 1 + sAmt * Math.sin(scaleAng + i * step);
-          } else {
-            scale = 1 + sAmt * Math.sin(scaleAng);
-          }
+        // audio processing
+        let audioLevel = 0;
+        if (audioToggle.checked && analyser) {
+          analyser.getByteFrequencyData(freqData);
+          const len = freqData.length;
+          const third = Math.floor(len / 3);
+          const bass = freqData.slice(0, third).reduce((a, v) => a + v, 0) / third;
+          const mid = freqData.slice(third, 2 * third).reduce((a, v) => a + v, 0) / third;
+          const treb = freqData.slice(2 * third).reduce((a, v) => a + v, 0) / (len - 2 * third);
+          const totalW = +bassBoostIn.value + +midBoostIn.value + +trebBoostIn.value;
+          const weighted = bass * +bassBoostIn.value + mid * +midBoostIn.value + treb * +trebBoostIn.value;
+          audioLevel = (weighted / 255 / totalW) * +audioSensIn.value;
         }
 
-        const wpx = baseSize * scale;
-        const hpx = baseSize * scale * (vbH / vbW);
+        document.body.style.background = bg;
+        compAng += compSpd;
+        scaleAng += sRate;
+        radOscAng += rRate;
+        if (hueOn) hueAng = (hueAng + hueDr) % 360;
 
-        c.el.style.width = wpx + 'px';
-        c.el.style.height = hpx + 'px';
-        c.el.style.left = (x - wpx / 2) + 'px';
-        c.el.style.top = (y - hpx / 2) + 'px';
-        c.el.style.transform = `rotate(${c.ang}rad)`;
+        const n = clones.length;
+        const step = Math.PI * 2 / n;
+        clones.forEach((c, i) => {
+          // radius with uniform oscillation + audio
+          let rad = baseRad + audioLevel * +audioModMaxIn.value;
+          if (radialToggle.checked) {
+            const perItem = perItemRadialToggle.checked;
+            if (perItem) {
+              // Golden angle for more even distribution
+              const goldenAngle = 2.399963229728653;
+              rad += rAmt * Math.sin(radOscAng + i * goldenAngle);
+            } else {
+              rad += rAmt * Math.sin(radOscAng);
+            }
+          }
+          const ang = i * step + compAng;
+          const cx = animContainer.clientWidth / 2;
+          const cy = animContainer.clientHeight / 2;
+          const x = cx + rad * Math.cos(ang);
+          const y = cy + rad * Math.sin(ang);
 
-        if (hueOn) {
-          const shift = (hueAng + i * (360 / n)) % 360;
-          let brightness = 1, saturation = 1;
+          c.ang += indSpd;
+
+          // scale pulsation (uniform vs per-item)
+          let scale = 1;
           if (scaleToggle.checked) {
             const perItem = perItemScaleToggle.checked;
-            const t = perItem
-              ? (Math.sin(scaleAng + i * step) + 1) / 2
-              : (Math.sin(scaleAng) + 1) / 2;
-            brightness = 0.75 + 0.25 * t;
-            saturation = 0.75 + 0.5 * t;
+            if (perItem) {
+              scale = 1 + sAmt * Math.sin(scaleAng + i * step);
+            } else {
+              scale = 1 + sAmt * Math.sin(scaleAng);
+            }
           }
-          c.el.style.filter = `
-            brightness(${brightness})
-            saturate(${saturation})
-            hue-rotate(${shift}deg)
-          `;
-        } else {
-          c.el.style.filter = '';
-        }
-      });
 
-      requestAnimationFrame(animate);
+          const wpx = baseSize * scale;
+          const hpx = baseSize * scale * (vbH / vbW);
+
+          c.el.style.width = wpx + 'px';
+          c.el.style.height = hpx + 'px';
+          c.el.style.left = (x - wpx / 2) + 'px';
+          c.el.style.top = (y - hpx / 2) + 'px';
+          c.el.style.transform = `rotate(${c.ang}rad)`;
+
+          if (hueOn) {
+            const shift = (hueAng + i * (360 / n)) % 360;
+            let brightness = 1, saturation = 1;
+            if (scaleToggle.checked) {
+              const perItem = perItemScaleToggle.checked;
+              const t = perItem
+                ? (Math.sin(scaleAng + i * step) + 1) / 2
+                : (Math.sin(scaleAng) + 1) / 2;
+              brightness = 0.75 + 0.25 * t;
+              saturation = 0.75 + 0.5 * t;
+            }
+            c.el.style.filter = `
+              brightness(${brightness})
+              saturate(${saturation})
+              hue-rotate(${shift}deg)
+            `;
+          } else {
+            c.el.style.filter = '';
+          }
+        });
+
+        accumulator -= FIXED_TIME_STEP;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
     }
 
     // Add value display updates
@@ -1086,7 +1140,8 @@
       loadSavedFile();
     }
     attachSaveListeners();
-    requestAnimationFrame(animate);
+    lastFrameTime = performance.now();
+    animationFrameId = requestAnimationFrame(animate);
 
     // Add reset button event listeners
     document.getElementById('filterResetBtn').addEventListener('click', resetFilterControls);
@@ -1145,9 +1200,29 @@
     const panelMenu = document.querySelector('.panel-menu');
     const menuItems = document.querySelectorAll('.panel-menu-item');
     const panels = document.querySelectorAll('.control-panel');
+    const playPauseButton = document.querySelector('.play-pause-button');
 
     menuButton.addEventListener('click', () => {
       panelMenu.classList.toggle('active');
+    });
+
+    playPauseButton.addEventListener('click', () => {
+      isPaused = !isPaused;
+      if (isPaused) {
+        playPauseButton.textContent = '▶️ Play';
+        playPauseButton.classList.add('paused');
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      } else {
+        playPauseButton.textContent = '⏸️ Pause';
+        playPauseButton.classList.remove('paused');
+        lastFrameTime = performance.now();
+        if (!animationFrameId) {
+          animationFrameId = requestAnimationFrame(animate);
+        }
+      }
     });
 
     menuItems.forEach(item => {
@@ -1392,7 +1467,8 @@
       const examples = [
         { file: 'image_assets/blue-dragon.svg', label: 'Blue Dragon' },
         { file: 'image_assets/rubber-duck.png', label: 'Rubber Duck' },
-        { file: 'image_assets/takashi.svg', label: 'Takashi' }
+        { file: 'image_assets/takashi.svg', label: 'Takashi' },
+        { file: 'image_assets/instrument.svg', label: 'Instrument' }
       ];
       const examplesList = document.getElementById('examplesList');
       examplesList.innerHTML = '';
