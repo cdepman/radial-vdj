@@ -562,9 +562,18 @@ export class Controls {
   }
 
   applySettings(settings: Settings): void {
+    // Preserve visibility state
+    const wasVisible = this.isVisible;
+
     this.settings = { ...settings };
     this.render();
     this.attachEventListeners();
+
+    // Restore visibility state
+    if (wasVisible) {
+      this.show();
+    }
+
     this.onChange(this.settings);
     saveSettings(this.settings);
   }
