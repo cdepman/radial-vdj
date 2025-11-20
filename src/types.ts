@@ -20,6 +20,10 @@ export interface Settings {
   radialAmt: number;
   perItemRadial: boolean;
 
+  // Radial orientation
+  radialOrientationEnabled: boolean;
+  radialOrientationOffset: number;
+
   // Appearance
   bgColor: string;
   hueMode: boolean;

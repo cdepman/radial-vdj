@@ -20,6 +20,8 @@ export const DEFAULT_SETTINGS: Settings = {
   radialAmt: 96,
   radialToggle: true,
   perItemRadial: false,
+  radialOrientationEnabled: false,
+  radialOrientationOffset: 0,
   bgColor: '#111111',
   hueMode: true,
   hueSpeed: 0.5,

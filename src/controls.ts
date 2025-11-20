@@ -149,6 +149,27 @@ export class Controls {
             </label>
           </section>
 
+          <!-- Radial Orientation -->
+          <section class="control-section">
+            <h3>🧭 Radial Orientation</h3>
+            <label class="checkbox-label">
+              <input type="checkbox" id="radialOrientationEnabled" ${this.settings.radialOrientationEnabled ? 'checked' : ''} />
+              Enable Radial Orientation
+            </label>
+
+            <div class="control-group">
+              <label>Orientation Angle: <span id="radialOrientationOffset-value">${Math.round((this.settings.radialOrientationOffset * 180) / Math.PI)}°</span></label>
+              <input type="range" id="radialOrientationOffset" min="${-Math.PI}" max="${Math.PI}" step="0.01" value="${this.settings.radialOrientationOffset}" />
+            </div>
+
+            <div class="preset-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
+              <button class="preset-btn" data-angle="0" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Point Outward</button>
+              <button class="preset-btn" data-angle="${Math.PI}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Point Inward</button>
+              <button class="preset-btn" data-angle="${Math.PI / 2}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Tangent CW</button>
+              <button class="preset-btn" data-angle="${-Math.PI / 2}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Tangent CCW</button>
+            </div>
+          </section>
+
           <!-- Appearance -->
           <section class="control-section">
             <h3>🎨 Appearance</h3>
@@ -324,6 +345,18 @@ export class Controls {
       input.addEventListener('change', () => this.updateFromInputs());
     });
 
+    // Preset buttons for radial orientation
+    this.container.querySelectorAll('.preset-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const angle = parseFloat(btn.getAttribute('data-angle') || '0');
+        const slider = this.container.querySelector('#radialOrientationOffset') as HTMLInputElement;
+        if (slider) {
+          slider.value = angle.toString();
+          this.updateFromInputs();
+        }
+      });
+    });
+
     // Close button
     this.container.querySelector('#closeControls')?.addEventListener('click', () => {
       this.hide();
@@ -367,6 +400,8 @@ export class Controls {
       radialRate: parseFloat(getValue('radialRate')),
       radialAmt: parseInt(getValue('radialAmt')),
       perItemRadial: getChecked('perItemRadial'),
+      radialOrientationEnabled: getChecked('radialOrientationEnabled'),
+      radialOrientationOffset: parseFloat(getValue('radialOrientationOffset')),
       bgColor: getValue('bgColor'),
       hueMode: getChecked('hueMode'),
       hueSpeed: 0.5,
@@ -404,6 +439,7 @@ export class Controls {
       'scaleAmt-value': this.settings.scaleAmt.toFixed(2),
       'radialRate-value': this.settings.radialRate.toFixed(3),
       'radialAmt-value': `${this.settings.radialAmt}px`,
+      'radialOrientationOffset-value': `${Math.round((this.settings.radialOrientationOffset * 180) / Math.PI)}°`,
       'hueDriftSpeed-value': this.settings.hueDriftSpeed.toFixed(2),
       'audioSens-value': this.settings.audioSens.toFixed(1),
       'bassBoost-value': this.settings.bassBoost.toFixed(1),

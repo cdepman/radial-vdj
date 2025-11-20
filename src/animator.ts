@@ -249,9 +249,16 @@ export class Animator {
       const translateX = x - wpx / 2;
       const translateY = y - hpx / 2;
 
+      // Calculate final rotation with radial orientation if enabled
+      let finalRotation = clone.ang; // base spin rotation
+      if (s.radialOrientationEnabled) {
+        // Add position angle and user offset for radial orientation
+        finalRotation = clone.ang + ang + s.radialOrientationOffset;
+      }
+
       clone.el.style.width = `${wpx}px`;
       clone.el.style.height = `${hpx}px`;
-      clone.el.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${clone.ang}rad)`;
+      clone.el.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${finalRotation}rad)`;
 
       // Apply hue rotation if enabled
       if (s.hueMode) {
