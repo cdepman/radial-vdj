@@ -25,7 +25,7 @@
   "midBoost": 1,
   "trebBoost": 1,
   "audioModMax": 100,
-  "audioReactive": true,
+  "audioReactive": false,
   "filterEnabled": true,
   "brightness": 121,
   "contrast": 88,

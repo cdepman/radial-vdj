@@ -20,7 +20,7 @@
   "hueMode": true,
   "hueSpeed": 0.5,
   "hueDriftSpeed": -0.03,
-  "audioReactive": true,
+  "audioReactive": false,
   "audioSens": 4.2,
   "bassBoost": 1,
   "midBoost": 1,
