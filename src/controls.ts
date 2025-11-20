@@ -253,9 +253,15 @@ export class Controls {
             </div>
           </section>
 
-          <!-- Reset Buttons -->
+          <!-- Settings Management -->
           <section class="control-section">
-            <button class="btn-primary" id="resetAll">Reset All Settings</button>
+            <h3>💾 Settings Management</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn-primary" id="downloadSettings">📥 Download Settings</button>
+              <button class="btn-primary" id="uploadSettingsBtn">📤 Upload Settings</button>
+              <input type="file" id="uploadSettings" accept=".json" style="display: none;" />
+              <button class="btn-secondary" id="resetAll">🔄 Reset All Settings</button>
+            </div>
           </section>
         </div>
       </div>
@@ -365,6 +371,26 @@ export class Controls {
     // Reset button
     this.container.querySelector('#resetAll')?.addEventListener('click', () => {
       this.reset();
+    });
+
+    // Download settings button
+    this.container.querySelector('#downloadSettings')?.addEventListener('click', () => {
+      this.downloadSettings();
+    });
+
+    // Upload settings button
+    this.container.querySelector('#uploadSettingsBtn')?.addEventListener('click', () => {
+      const fileInput = this.container.querySelector('#uploadSettings') as HTMLInputElement;
+      fileInput?.click();
+    });
+
+    // Upload settings file input
+    const uploadInput = this.container.querySelector('#uploadSettings') as HTMLInputElement;
+    uploadInput?.addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        this.uploadSettings(file);
+      }
     });
   }
 
@@ -478,6 +504,58 @@ export class Controls {
       uploadPrompt.style.display = 'block';
       fileInfo.style.display = 'none';
     }
+  }
+
+  private downloadSettings(): void {
+    // Create a JSON blob with current settings
+    const settingsJson = JSON.stringify(this.settings, null, 2);
+    const blob = new Blob([settingsJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    // Create a temporary download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `svgplayerai-settings-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+  }
+
+  private uploadSettings(file: File): void {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const result = e.target?.result as string;
+        const loadedSettings = JSON.parse(result) as Settings;
+
+        // Validate that it has required properties
+        if (!loadedSettings || typeof loadedSettings !== 'object') {
+          throw new Error('Invalid settings file');
+        }
+
+        // Merge loaded settings with defaults to handle missing properties
+        this.settings = { ...DEFAULT_SETTINGS, ...loadedSettings };
+
+        // Re-render UI with new settings
+        this.render();
+        this.attachEventListeners();
+
+        // Apply the settings
+        this.onChange(this.settings);
+        saveSettings(this.settings);
+
+        alert('Settings loaded successfully!');
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+        alert('Failed to load settings file. Please check the file format.');
+      }
+    };
+
+    reader.readAsText(file);
   }
 
   reset(): void {
