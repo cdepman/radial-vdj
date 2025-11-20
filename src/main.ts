@@ -207,7 +207,7 @@ class App {
       this.animator.start();
     } else {
       // Load default example
-      this.handleExampleLoad('image_assets/takashi.svg', 'Takashi');
+      this.handleExampleLoad('/image_assets/takashi.svg', 'Takashi');
     }
   }
 }
