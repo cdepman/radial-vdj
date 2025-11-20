@@ -6,7 +6,7 @@ export class Controls {
   private settings: Settings;
   private onChange: (settings: Settings) => void;
   private onFileLoad: (file: File) => void;
-  private onExampleLoad: (filename: string, label: string) => void;
+  private onExampleLoad: (filename: string, label: string, presetUrl?: string) => void;
   private onClear: () => void;
   private isVisible = false;
 
@@ -16,7 +16,7 @@ export class Controls {
     callbacks: {
       onChange: (settings: Settings) => void;
       onFileLoad: (file: File) => void;
-      onExampleLoad: (filename: string, label: string) => void;
+      onExampleLoad: (filename: string, label: string, presetUrl?: string) => void;
       onClear: () => void;
     }
   ) {
@@ -272,6 +272,8 @@ export class Controls {
 
   private renderExamples(): void {
     const examples: Example[] = [
+      { file: '/image_assets/tomopteris.svg', label: 'Tomopteris', presetUrl: '/presets/tomopteris.json' },
+      { file: '/image_assets/jelly.svg', label: 'Jelly', presetUrl: '/presets/jelly.json' },
       { file: '/image_assets/blue-dragon.svg', label: 'Blue Dragon' },
       { file: '/image_assets/takashi.svg', label: 'Takashi' },
       { file: '/image_assets/rubber-duck.png', label: 'Rubber Duck' },
@@ -284,7 +286,7 @@ export class Controls {
     grid.innerHTML = examples
       .map(
         (ex) => `
-        <button class="example-btn" data-file="${ex.file}" data-label="${ex.label}">
+        <button class="example-btn" data-file="${ex.file}" data-label="${ex.label}" data-preset="${ex.presetUrl || ''}">
           ${ex.label}
         </button>
       `
@@ -334,8 +336,9 @@ export class Controls {
       btn.addEventListener('click', () => {
         const file = btn.getAttribute('data-file');
         const label = btn.getAttribute('data-label');
+        const presetUrl = btn.getAttribute('data-preset');
         if (file && label) {
-          this.onExampleLoad(file, label);
+          this.onExampleLoad(file, label, presetUrl || undefined);
           this.updateFileInfo(label);
         }
       });
@@ -558,12 +561,16 @@ export class Controls {
     reader.readAsText(file);
   }
 
-  reset(): void {
-    this.settings = { ...DEFAULT_SETTINGS };
+  applySettings(settings: Settings): void {
+    this.settings = { ...settings };
     this.render();
     this.attachEventListeners();
     this.onChange(this.settings);
     saveSettings(this.settings);
+  }
+
+  reset(): void {
+    this.applySettings(DEFAULT_SETTINGS);
   }
 
   show(): void {

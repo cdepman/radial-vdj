@@ -29,7 +29,7 @@ class App {
     this.controls = new Controls(controlsContainer, this.settings, {
       onChange: (settings) => this.handleSettingsChange(settings),
       onFileLoad: (file) => this.handleFileLoad(file),
-      onExampleLoad: (filename, label) => this.handleExampleLoad(filename, label),
+      onExampleLoad: (filename, label, presetUrl) => this.handleExampleLoad(filename, label, presetUrl),
       onClear: () => this.handleClear(),
     });
 
@@ -160,7 +160,23 @@ class App {
     }
   }
 
-  private handleExampleLoad(filename: string, _label: string): void {
+  private async handleExampleLoad(filename: string, _label: string, presetUrl?: string): Promise<void> {
+    // Load preset settings if provided
+    if (presetUrl) {
+      try {
+        const response = await fetch(presetUrl);
+        const presetSettings = await response.json();
+
+        // Merge preset with current settings
+        this.settings = { ...this.settings, ...presetSettings };
+
+        // Update controls UI and apply settings
+        this.controls.applySettings(this.settings);
+      } catch (err) {
+        console.error('Failed to load preset:', err);
+      }
+    }
+
     const ext = filename.split('.').pop()?.toLowerCase();
 
     if (ext === 'svg') {

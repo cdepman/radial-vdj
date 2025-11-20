@@ -71,4 +71,5 @@ export interface Example {
   file: string;
   label: string;
   preset?: Partial<Settings>;
+  presetUrl?: string;
 }
