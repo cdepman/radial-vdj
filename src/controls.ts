@@ -101,6 +101,27 @@ export class Controls {
             </div>
           </section>
 
+          <!-- Component Radial Orientation -->
+          <section class="control-section">
+            <h3>🧭 Component Radial Orientation</h3>
+            <label class="checkbox-label">
+              <input type="checkbox" id="radialOrientationEnabled" ${this.settings.radialOrientationEnabled ? 'checked' : ''} />
+              Enable Radial Orientation
+            </label>
+
+            <div class="control-group">
+              <label>Orientation Angle: <span id="radialOrientationOffset-value">${Math.round((this.settings.radialOrientationOffset * 180) / Math.PI)}°</span></label>
+              <input type="range" id="radialOrientationOffset" min="${-Math.PI}" max="${Math.PI}" step="0.01" value="${this.settings.radialOrientationOffset}" />
+            </div>
+
+            <div class="preset-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
+              <button class="preset-btn" data-angle="0" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Point Outward</button>
+              <button class="preset-btn" data-angle="${Math.PI}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Point Inward</button>
+              <button class="preset-btn" data-angle="${Math.PI / 2}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Tangent CW</button>
+              <button class="preset-btn" data-angle="${-Math.PI / 2}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Tangent CCW</button>
+            </div>
+          </section>
+
           <!-- Scale Pulsation -->
           <section class="control-section">
             <h3>📏 Scale Pulsation</h3>
@@ -147,27 +168,6 @@ export class Controls {
               <input type="checkbox" id="perItemRadial" ${this.settings.perItemRadial ? 'checked' : ''} />
               Individual Variation
             </label>
-          </section>
-
-          <!-- Radial Orientation -->
-          <section class="control-section">
-            <h3>🧭 Radial Orientation</h3>
-            <label class="checkbox-label">
-              <input type="checkbox" id="radialOrientationEnabled" ${this.settings.radialOrientationEnabled ? 'checked' : ''} />
-              Enable Radial Orientation
-            </label>
-
-            <div class="control-group">
-              <label>Orientation Angle: <span id="radialOrientationOffset-value">${Math.round((this.settings.radialOrientationOffset * 180) / Math.PI)}°</span></label>
-              <input type="range" id="radialOrientationOffset" min="${-Math.PI}" max="${Math.PI}" step="0.01" value="${this.settings.radialOrientationOffset}" />
-            </div>
-
-            <div class="preset-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
-              <button class="preset-btn" data-angle="0" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Point Outward</button>
-              <button class="preset-btn" data-angle="${Math.PI}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Point Inward</button>
-              <button class="preset-btn" data-angle="${Math.PI / 2}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Tangent CW</button>
-              <button class="preset-btn" data-angle="${-Math.PI / 2}" style="padding: 8px; border: 1px solid #0f0; background: rgba(0,255,0,0.1); color: #0f0; border-radius: 4px; cursor: pointer; font-size: 11px;">Tangent CCW</button>
-            </div>
           </section>
 
           <!-- Appearance -->
