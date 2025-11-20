@@ -393,6 +393,11 @@ export class Controls {
   private renderExamples(): void {
     const examples: Example[] = [
       {
+        file: '/image_assets/needle-and-thread.svg',
+        label: 'Needle and Thread',
+        presetUrl: '/presets/needle-and-thread.json',
+      },
+      {
         file: '/image_assets/tomopteris.svg',
         label: 'Tomopteris',
         presetUrl: '/presets/tomopteris.json',
@@ -410,7 +415,6 @@ export class Controls {
       { file: '/image_assets/blue-dragon.svg', label: 'Blue Dragon' },
       { file: '/image_assets/takashi.svg', label: 'Takashi' },
       { file: '/image_assets/rubber-duck.png', label: 'Rubber Duck' },
-      { file: '/image_assets/instrument.svg', label: 'Instrument' },
     ]
 
     const grid = this.container.querySelector('#exampleGrid')
