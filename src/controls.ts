@@ -403,7 +403,7 @@ export class Controls {
         presetUrl: '/presets/jelly.json',
       },
       {
-        file: '/image_assets/jelly.svg',
+        file: '/image_assets/cup-of-tea.svg',
         label: 'Cup of Tea',
         presetUrl: '/presets/cup-of-tea.json',
       },
