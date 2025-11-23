@@ -1,4 +1,4 @@
-# SVG Player AI
+# SVG Player
 
 A high-performance radial SVG animator with audio reactivity and real-time visual effects. Think of it as a visual DJ tool for creating animated kaleidoscopic patterns from SVG and PNG images.
 
@@ -24,6 +24,7 @@ npm run preview    # preview production build
 ## Controls
 
 ### Animation
+
 - **Repeats**: Number of clones (1-128)
 - **Size**: Base size of each shape
 - **Radius**: Distance from center
@@ -31,36 +32,43 @@ npm run preview    # preview production build
 - **Individual Spin**: Per-shape rotation speed
 
 ### Component Radial Orientation
+
 - **Enable/Disable**: Toggle orientation relative to center
 - **Offset**: Fine-tune orientation angle
 - **Presets**: Point outward, point inward, or tangent alignment
 
 ### Scale Pulsation
+
 - **Rate**: Pulsation speed
 - **Amount**: Pulsation intensity
 - **Individual Variation**: Per-shape randomization
 
 ### Radial Oscillation
+
 - **Rate**: Oscillation speed
 - **Amount**: Oscillation distance
 - **Individual Variation**: Per-shape randomization
 
 ### Appearance
+
 - **Background**: Background color
 - **Hue Rotation**: Enable color cycling
 - **Hue Drift**: Color cycle speed
 
 ### Filters
+
 - **Brightness/Contrast/Saturation**: Color adjustments
 - **Blur**: Blur effect
 
 ### Audio Reactive
+
 - **Enable**: Sync to microphone
 - **Sensitivity**: Overall responsiveness
 - **Bass/Mid/Treble Boost**: Frequency-specific amplification
 - **Max Radius Mod**: Maximum radius change from audio
 
 ### Settings Management
+
 - **Download**: Export current settings as JSON
 - **Upload**: Import previously saved settings
 - **Reset**: Restore default settings
@@ -75,7 +83,7 @@ npm run preview    # preview production build
 ## Project Structure
 
 ```
-svgplayerai/
+svgplayer/
 ├── src/
 │   ├── main.ts          # App initialization
 │   ├── animator.ts      # Core animation engine

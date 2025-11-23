@@ -19,6 +19,7 @@ export class Animator {
     hueAng: 0,
     radOscAng: 0,
     bgShiftAng: 0,
+    waveAng: 0,
     isPaused: false,
     lastFrameTime: 0,
     accumulator: 0,
@@ -113,6 +114,7 @@ export class Animator {
     this.state.hueAng = 0;
     this.state.radOscAng = 0;
     this.state.bgShiftAng = 0;
+    this.state.waveAng = 0;
   }
 
   buildClones(): void {
@@ -137,6 +139,9 @@ export class Animator {
       if (this.settings.removeStroke) {
         this.removeStrokeFromElement(clone);
       }
+
+      // Apply blend mode
+      clone.style.mixBlendMode = this.settings.blendMode;
 
       fragment.appendChild(clone);
       this.clones.push({ el: clone, ang: 0, scale: 1, radius: 0 });
@@ -167,11 +172,12 @@ export class Animator {
   updateSettings(settings: Settings): void {
     const needsRebuild =
       this.clones.length !== settings.repeats ||
-      this.settings.removeStroke !== settings.removeStroke;
+      this.settings.removeStroke !== settings.removeStroke ||
+      this.settings.blendMode !== settings.blendMode;
 
     this.settings = settings;
 
-    // Rebuild clones if repeat count or stroke setting changed
+    // Rebuild clones if repeat count, stroke, or blend mode changed
     if (needsRebuild && this.sourceSvg) {
       this.buildClones();
     }
@@ -221,6 +227,10 @@ export class Animator {
       this.state.bgShiftAng = (this.state.bgShiftAng + s.backgroundColorShiftSpeed) % 360;
     }
 
+    if (s.waveEnabled) {
+      this.state.waveAng += s.waveSpeed;
+    }
+
     // Update individual clone angles
     this.clones.forEach(clone => {
       clone.ang += indSpd;
@@ -263,8 +273,23 @@ export class Animator {
 
       // Calculate position
       const ang = i * step + this.state.compAng;
-      const x = cx + rad * Math.cos(ang);
-      const y = cy + rad * Math.sin(ang);
+      let x = cx + rad * Math.cos(ang);
+      let y = cy + rad * Math.sin(ang);
+
+      // Apply wave formation (perpendicular to radius)
+      if (s.waveEnabled) {
+        // Calculate wave offset
+        let wavePhase = this.state.waveAng + i * s.waveFrequency * step;
+        if (s.perItemWave) {
+          wavePhase += i * goldenAngle;
+        }
+        const waveOffset = s.waveAmplitude * Math.sin(wavePhase);
+
+        // Apply offset perpendicular to radius (tangent direction)
+        const tangentAng = ang + Math.PI / 2;
+        x += waveOffset * Math.cos(tangentAng);
+        y += waveOffset * Math.sin(tangentAng);
+      }
 
       // Calculate scale
       let scale = 1;

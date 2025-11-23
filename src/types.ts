@@ -33,6 +33,14 @@ export interface Settings {
   backgroundColorShift: boolean;
   backgroundColorShiftPreset: 'rainbow' | 'warm' | 'cool' | 'sunset' | 'ocean' | 'fire' | 'purpleHaze';
   backgroundColorShiftSpeed: number;
+  blendMode: string;
+
+  // Wave formation
+  waveEnabled: boolean;
+  waveFrequency: number;
+  waveAmplitude: number;
+  waveSpeed: number;
+  perItemWave: boolean;
 
   // Audio
   audioReactive: boolean;
@@ -67,6 +75,7 @@ export interface AnimationState {
   hueAng: number;
   radOscAng: number;
   bgShiftAng: number;
+  waveAng: number;
   isPaused: boolean;
   lastFrameTime: number;
   accumulator: number;

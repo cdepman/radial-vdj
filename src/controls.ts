@@ -242,6 +242,51 @@ export class Controls {
             </label>
           </section>
 
+          <!-- Wave Formation -->
+          <section class="control-section">
+            <h3>〰️ Wave Formation</h3>
+            <label class="checkbox-label">
+              <input type="checkbox" id="waveEnabled" ${
+                this.settings.waveEnabled ? 'checked' : ''
+              } />
+              Enable Wave Formation
+            </label>
+
+            <div class="control-group">
+              <label>Frequency: <span id="waveFrequency-value">${this.settings.waveFrequency.toFixed(
+                1
+              )}</span></label>
+              <input type="range" id="waveFrequency" min="1" max="20" step="0.5" value="${
+                this.settings.waveFrequency
+              }" />
+            </div>
+
+            <div class="control-group">
+              <label>Amplitude: <span id="waveAmplitude-value">${
+                this.settings.waveAmplitude
+              }px</span></label>
+              <input type="range" id="waveAmplitude" min="0" max="200" step="5" value="${
+                this.settings.waveAmplitude
+              }" />
+            </div>
+
+            <div class="control-group">
+              <label>Speed: <span id="waveSpeed-value">${this.settings.waveSpeed.toFixed(
+                3
+              )}</span></label>
+              <input type="range" id="waveSpeed" min="-0.1" max="0.1" step="0.001" value="${
+                this.settings.waveSpeed
+              }" />
+            </div>
+
+            <label class="checkbox-label">
+              <input type="checkbox" id="perItemWave" ${
+                this.settings.perItemWave ? 'checked' : ''
+              } />
+              Individual Variation
+            </label>
+          </section>
+
           <!-- Appearance -->
           <section class="control-section">
             <h3>🎨 Appearance</h3>
@@ -275,6 +320,60 @@ export class Controls {
               } />
               Remove Stroke
             </label>
+
+            <div class="control-group">
+              <label>Blend Mode</label>
+              <select id="blendMode">
+                <option value="normal" ${
+                  this.settings.blendMode === 'normal' ? 'selected' : ''
+                }>Normal</option>
+                <option value="multiply" ${
+                  this.settings.blendMode === 'multiply' ? 'selected' : ''
+                }>Multiply</option>
+                <option value="screen" ${
+                  this.settings.blendMode === 'screen' ? 'selected' : ''
+                }>Screen</option>
+                <option value="overlay" ${
+                  this.settings.blendMode === 'overlay' ? 'selected' : ''
+                }>Overlay</option>
+                <option value="darken" ${
+                  this.settings.blendMode === 'darken' ? 'selected' : ''
+                }>Darken</option>
+                <option value="lighten" ${
+                  this.settings.blendMode === 'lighten' ? 'selected' : ''
+                }>Lighten</option>
+                <option value="color-dodge" ${
+                  this.settings.blendMode === 'color-dodge' ? 'selected' : ''
+                }>Color Dodge</option>
+                <option value="color-burn" ${
+                  this.settings.blendMode === 'color-burn' ? 'selected' : ''
+                }>Color Burn</option>
+                <option value="hard-light" ${
+                  this.settings.blendMode === 'hard-light' ? 'selected' : ''
+                }>Hard Light</option>
+                <option value="soft-light" ${
+                  this.settings.blendMode === 'soft-light' ? 'selected' : ''
+                }>Soft Light</option>
+                <option value="difference" ${
+                  this.settings.blendMode === 'difference' ? 'selected' : ''
+                }>Difference</option>
+                <option value="exclusion" ${
+                  this.settings.blendMode === 'exclusion' ? 'selected' : ''
+                }>Exclusion</option>
+                <option value="hue" ${
+                  this.settings.blendMode === 'hue' ? 'selected' : ''
+                }>Hue</option>
+                <option value="saturation" ${
+                  this.settings.blendMode === 'saturation' ? 'selected' : ''
+                }>Saturation</option>
+                <option value="color" ${
+                  this.settings.blendMode === 'color' ? 'selected' : ''
+                }>Color</option>
+                <option value="luminosity" ${
+                  this.settings.blendMode === 'luminosity' ? 'selected' : ''
+                }>Luminosity</option>
+              </select>
+            </div>
 
             <label class="checkbox-label">
               <input type="checkbox" id="backgroundColorShift" ${
@@ -476,6 +575,11 @@ export class Controls {
         label: 'Cup of Tea',
         presetUrl: '/presets/cup-of-tea.json',
       },
+      {
+        file: '/image_assets/mane.svg',
+        label: 'Mane',
+        presetUrl: '/presets/mane.json',
+      },
       { file: '/image_assets/blue-dragon.svg', label: 'Blue Dragon' },
       { file: '/image_assets/takashi.svg', label: 'Takashi' },
       { file: '/image_assets/rubber-duck.png', label: 'Rubber Duck' },
@@ -650,6 +754,11 @@ export class Controls {
       radialRate: parseFloat(getValue('radialRate')),
       radialAmt: parseInt(getValue('radialAmt')),
       perItemRadial: getChecked('perItemRadial'),
+      waveEnabled: getChecked('waveEnabled'),
+      waveFrequency: parseFloat(getValue('waveFrequency')),
+      waveAmplitude: parseInt(getValue('waveAmplitude')),
+      waveSpeed: parseFloat(getValue('waveSpeed')),
+      perItemWave: getChecked('perItemWave'),
       radialOrientationEnabled: getChecked('radialOrientationEnabled'),
       radialOrientationOffset: parseFloat(getValue('radialOrientationOffset')),
       bgColor: getValue('bgColor'),
@@ -657,6 +766,7 @@ export class Controls {
       hueSpeed: 0.5,
       hueDriftSpeed: parseFloat(getValue('hueDriftSpeed')),
       removeStroke: getChecked('removeStroke'),
+      blendMode: getValue('blendMode'),
       backgroundColorShift: getChecked('backgroundColorShift'),
       backgroundColorShiftPreset: getValue('backgroundColorShiftPreset') as
         | 'rainbow'
@@ -702,6 +812,9 @@ export class Controls {
       'scaleAmt-value': this.settings.scaleAmt.toFixed(2),
       'radialRate-value': this.settings.radialRate.toFixed(3),
       'radialAmt-value': `${this.settings.radialAmt}px`,
+      'waveFrequency-value': this.settings.waveFrequency.toFixed(1),
+      'waveAmplitude-value': `${this.settings.waveAmplitude}px`,
+      'waveSpeed-value': this.settings.waveSpeed.toFixed(3),
       'radialOrientationOffset-value': `${Math.round(
         (this.settings.radialOrientationOffset * 180) / Math.PI
       )}°`,
