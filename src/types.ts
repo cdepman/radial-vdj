@@ -29,6 +29,7 @@ export interface Settings {
   hueMode: boolean;
   hueSpeed: number;
   hueDriftSpeed: number;
+  removeStroke: boolean;
 
   // Audio
   audioReactive: boolean;

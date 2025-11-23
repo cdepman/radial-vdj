@@ -268,6 +268,13 @@ export class Controls {
                 this.settings.hueDriftSpeed
               }" />
             </div>
+
+            <label class="checkbox-label">
+              <input type="checkbox" id="removeStroke" ${
+                this.settings.removeStroke ? 'checked' : ''
+              } />
+              Remove Stroke
+            </label>
           </section>
 
           <!-- Filters -->
@@ -592,6 +599,7 @@ export class Controls {
       hueMode: getChecked('hueMode'),
       hueSpeed: 0.5,
       hueDriftSpeed: parseFloat(getValue('hueDriftSpeed')),
+      removeStroke: getChecked('removeStroke'),
       audioReactive: getChecked('audioReactive'),
       audioSens: parseFloat(getValue('audioSens')),
       bassBoost: parseFloat(getValue('bassBoost')),

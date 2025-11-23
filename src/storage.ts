@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hueMode: true,
   hueSpeed: 0.5,
   hueDriftSpeed: 0.1,
+  removeStroke: false,
   audioSens: 1,
   bassBoost: 1,
   midBoost: 1,

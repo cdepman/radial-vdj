@@ -131,6 +131,11 @@ export class Animator {
       clone.style.willChange = 'transform'; // GPU acceleration hint
       clone.classList.add('monad');
 
+      // Remove stroke if setting is enabled
+      if (this.settings.removeStroke) {
+        this.removeStrokeFromElement(clone);
+      }
+
       fragment.appendChild(clone);
       this.clones.push({ el: clone, ang: 0, scale: 1, radius: 0 });
     }
@@ -138,11 +143,34 @@ export class Animator {
     this.container.appendChild(fragment);
   }
 
+  private removeStrokeFromElement(element: HTMLElement): void {
+    // Remove stroke from the element itself
+    if (element instanceof SVGElement) {
+      element.style.stroke = 'none';
+      element.setAttribute('stroke', 'none');
+      element.setAttribute('stroke-width', '0');
+    }
+
+    // Remove stroke from all child SVG elements
+    const svgElements = element.querySelectorAll('*');
+    svgElements.forEach((child) => {
+      if (child instanceof SVGElement) {
+        child.style.stroke = 'none';
+        child.setAttribute('stroke', 'none');
+        child.setAttribute('stroke-width', '0');
+      }
+    });
+  }
+
   updateSettings(settings: Settings): void {
+    const needsRebuild =
+      this.clones.length !== settings.repeats ||
+      this.settings.removeStroke !== settings.removeStroke;
+
     this.settings = settings;
 
-    // Rebuild clones if repeat count changed
-    if (this.clones.length !== settings.repeats && this.sourceSvg) {
+    // Rebuild clones if repeat count or stroke setting changed
+    if (needsRebuild && this.sourceSvg) {
       this.buildClones();
     }
   }
