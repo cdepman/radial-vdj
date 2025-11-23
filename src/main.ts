@@ -56,6 +56,9 @@ class App {
 
     // Setup toggle button
     this.setupToggleButton()
+
+    // Start background update loop
+    this.updateBackgroundLoop()
   }
 
   private setupKeyboardShortcuts(): void {
@@ -111,8 +114,10 @@ class App {
     // Update animator
     this.animator.updateSettings(this.settings)
 
-    // Update background
-    document.body.style.background = this.settings.bgColor
+    // Update background (will be overridden by updateBackgroundLoop if colorshift is enabled)
+    if (!this.settings.backgroundColorShift) {
+      document.body.style.background = this.settings.bgColor
+    }
 
     // Apply container filters
     const container = document.getElementById('animationContainer')
@@ -140,6 +145,12 @@ class App {
         }
       })
     }
+  }
+
+  private updateBackgroundLoop = (): void => {
+    const bgColor = this.animator.getCurrentBackgroundColor()
+    document.body.style.background = bgColor
+    requestAnimationFrame(this.updateBackgroundLoop)
   }
 
   private async handleFileLoad(file: File): Promise<void> {

@@ -30,6 +30,9 @@ export interface Settings {
   hueSpeed: number;
   hueDriftSpeed: number;
   removeStroke: boolean;
+  backgroundColorShift: boolean;
+  backgroundColorShiftPreset: 'rainbow' | 'warm' | 'cool' | 'sunset' | 'ocean' | 'fire' | 'purpleHaze';
+  backgroundColorShiftSpeed: number;
 
   // Audio
   audioReactive: boolean;
@@ -63,6 +66,7 @@ export interface AnimationState {
   scaleAng: number;
   hueAng: number;
   radOscAng: number;
+  bgShiftAng: number;
   isPaused: boolean;
   lastFrameTime: number;
   accumulator: number;

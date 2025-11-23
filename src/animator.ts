@@ -18,6 +18,7 @@ export class Animator {
     scaleAng: 0,
     hueAng: 0,
     radOscAng: 0,
+    bgShiftAng: 0,
     isPaused: false,
     lastFrameTime: 0,
     accumulator: 0,
@@ -111,6 +112,7 @@ export class Animator {
     this.state.scaleAng = 0;
     this.state.hueAng = 0;
     this.state.radOscAng = 0;
+    this.state.bgShiftAng = 0;
   }
 
   buildClones(): void {
@@ -213,6 +215,10 @@ export class Animator {
 
     if (s.hueMode) {
       this.state.hueAng = (this.state.hueAng + s.hueDriftSpeed) % 360;
+    }
+
+    if (s.backgroundColorShift) {
+      this.state.bgShiftAng = (this.state.bgShiftAng + s.backgroundColorShiftSpeed) % 360;
     }
 
     // Update individual clone angles
@@ -352,5 +358,72 @@ export class Animator {
 
   get isPaused(): boolean {
     return this.state.isPaused;
+  }
+
+  getCurrentBackgroundColor(): string {
+    if (!this.settings.backgroundColorShift) {
+      return this.settings.bgColor;
+    }
+
+    return this.getColorFromPreset(
+      this.settings.backgroundColorShiftPreset,
+      this.state.bgShiftAng
+    );
+  }
+
+  private getColorFromPreset(preset: string, angle: number): string {
+    const hslToHex = (h: number, s: number, l: number): string => {
+      l /= 100;
+      const a = (s * Math.min(l, 1 - l)) / 100;
+      const f = (n: number) => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color)
+          .toString(16)
+          .padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    };
+
+    const t = angle / 360; // Normalized 0-1
+
+    switch (preset) {
+      case 'rainbow':
+        return hslToHex(angle, 70, 20);
+
+      case 'warm':
+        // Cycle through warm colors: red to orange to yellow
+        const warmHue = 0 + t * 60; // 0° (red) to 60° (yellow)
+        return hslToHex(warmHue, 80, 25);
+
+      case 'cool':
+        // Cycle through cool colors: blue to cyan to purple
+        const coolHue = 180 + t * 120; // 180° (cyan) to 300° (purple)
+        return hslToHex(coolHue, 70, 20);
+
+      case 'sunset':
+        // Transition from orange to purple
+        const sunsetHue = 20 + t * 260; // 20° (orange) to 280° (purple)
+        return hslToHex(sunsetHue, 75, 22);
+
+      case 'ocean':
+        // Cycle through ocean colors: blue to teal to deep blue
+        const oceanHue = 180 + Math.sin(t * Math.PI * 2) * 30;
+        return hslToHex(oceanHue, 65, 18);
+
+      case 'fire':
+        // Cycle through fire colors: deep red to orange to yellow
+        const fireHue = 0 + Math.sin(t * Math.PI) * 40;
+        const fireLightness = 20 + Math.sin(t * Math.PI) * 10;
+        return hslToHex(fireHue, 85, fireLightness);
+
+      case 'purpleHaze':
+        // Cycle through purples and pinks
+        const purpleHue = 270 + t * 60; // 270° (purple) to 330° (magenta)
+        return hslToHex(purpleHue, 70, 20);
+
+      default:
+        return this.settings.bgColor;
+    }
   }
 }

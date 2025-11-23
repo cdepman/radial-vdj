@@ -275,6 +275,63 @@ export class Controls {
               } />
               Remove Stroke
             </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" id="backgroundColorShift" ${
+                this.settings.backgroundColorShift ? 'checked' : ''
+              } />
+              Background Color Shift
+            </label>
+
+            <div class="control-group">
+              <label>Color Preset</label>
+              <select id="backgroundColorShiftPreset">
+                <option value="rainbow" ${
+                  this.settings.backgroundColorShiftPreset === 'rainbow'
+                    ? 'selected'
+                    : ''
+                }>Rainbow (Full Spectrum)</option>
+                <option value="warm" ${
+                  this.settings.backgroundColorShiftPreset === 'warm'
+                    ? 'selected'
+                    : ''
+                }>Warm (Red → Orange → Yellow)</option>
+                <option value="cool" ${
+                  this.settings.backgroundColorShiftPreset === 'cool'
+                    ? 'selected'
+                    : ''
+                }>Cool (Cyan → Blue → Purple)</option>
+                <option value="sunset" ${
+                  this.settings.backgroundColorShiftPreset === 'sunset'
+                    ? 'selected'
+                    : ''
+                }>Sunset (Orange → Pink → Purple)</option>
+                <option value="ocean" ${
+                  this.settings.backgroundColorShiftPreset === 'ocean'
+                    ? 'selected'
+                    : ''
+                }>Ocean (Deep Blue ↔ Teal)</option>
+                <option value="fire" ${
+                  this.settings.backgroundColorShiftPreset === 'fire'
+                    ? 'selected'
+                    : ''
+                }>Fire (Red ↔ Orange ↔ Yellow)</option>
+                <option value="purpleHaze" ${
+                  this.settings.backgroundColorShiftPreset === 'purpleHaze'
+                    ? 'selected'
+                    : ''
+                }>Purple Haze (Purple → Magenta → Pink)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label>Shift Speed: <span id="backgroundColorShiftSpeed-value">${this.settings.backgroundColorShiftSpeed.toFixed(
+                2
+              )}</span></label>
+              <input type="range" id="backgroundColorShiftSpeed" min="0" max="5" step="0.1" value="${
+                this.settings.backgroundColorShiftSpeed
+              }" />
+            </div>
           </section>
 
           <!-- Filters -->
@@ -496,7 +553,7 @@ export class Controls {
 
     // All inputs
     const inputs = this.container.querySelectorAll<HTMLInputElement>(
-      'input[type="range"], input[type="number"], input[type="checkbox"], input[type="color"], input[type="radio"]'
+      'input[type="range"], input[type="number"], input[type="checkbox"], input[type="color"], input[type="radio"], select'
     )
 
     inputs.forEach((input) => {
@@ -600,6 +657,18 @@ export class Controls {
       hueSpeed: 0.5,
       hueDriftSpeed: parseFloat(getValue('hueDriftSpeed')),
       removeStroke: getChecked('removeStroke'),
+      backgroundColorShift: getChecked('backgroundColorShift'),
+      backgroundColorShiftPreset: getValue('backgroundColorShiftPreset') as
+        | 'rainbow'
+        | 'warm'
+        | 'cool'
+        | 'sunset'
+        | 'ocean'
+        | 'fire'
+        | 'purpleHaze',
+      backgroundColorShiftSpeed: parseFloat(
+        getValue('backgroundColorShiftSpeed')
+      ),
       audioReactive: getChecked('audioReactive'),
       audioSens: parseFloat(getValue('audioSens')),
       bassBoost: parseFloat(getValue('bassBoost')),
@@ -637,6 +706,8 @@ export class Controls {
         (this.settings.radialOrientationOffset * 180) / Math.PI
       )}°`,
       'hueDriftSpeed-value': this.settings.hueDriftSpeed.toFixed(2),
+      'backgroundColorShiftSpeed-value':
+        this.settings.backgroundColorShiftSpeed.toFixed(2),
       'audioSens-value': this.settings.audioSens.toFixed(1),
       'bassBoost-value': this.settings.bassBoost.toFixed(1),
       'midBoost-value': this.settings.midBoost.toFixed(1),
