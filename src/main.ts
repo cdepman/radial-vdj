@@ -6,6 +6,7 @@ import {
   loadSavedFile,
   saveSavedFile,
   clearSavedFile,
+  DEFAULT_SETTINGS,
 } from './storage'
 import type { Settings } from './types'
 import './styles/main.css'
@@ -185,20 +186,27 @@ class App {
     _label: string,
     presetUrl?: string
   ): Promise<void> {
-    // Load preset settings if provided
+    // Always reset to defaults first, then apply preset if provided
     if (presetUrl) {
       try {
         const response = await fetch(presetUrl)
         const presetSettings = await response.json()
 
-        // Merge preset with current settings
-        this.settings = { ...this.settings, ...presetSettings }
+        // Merge preset with default settings
+        this.settings = { ...DEFAULT_SETTINGS, ...presetSettings }
 
         // Update controls UI and apply settings
         this.controls.applySettings(this.settings)
       } catch (err) {
         console.error('Failed to load preset:', err)
+        // If preset fails to load, still reset to defaults
+        this.settings = { ...DEFAULT_SETTINGS }
+        this.controls.applySettings(this.settings)
       }
+    } else {
+      // No preset - reset to defaults
+      this.settings = { ...DEFAULT_SETTINGS }
+      this.controls.applySettings(this.settings)
     }
 
     const ext = filename.split('.').pop()?.toLowerCase()
