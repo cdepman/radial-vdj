@@ -12,7 +12,8 @@ body {
   overflow: hidden;
   width: 100%;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   background: #111;
   color: #0f0;
 }
@@ -126,7 +127,6 @@ body {
 .control-header {
   position: sticky;
   top: 0;
-  background: rgba(0, 0, 0, 0.98);
   border-bottom: 2px solid #0f0;
   padding: 20px;
   display: flex;
@@ -415,19 +415,4 @@ input[type='color'] {
     padding: 8px 12px;
     font-size: 14px;
   }
-}
-
-/* Animations */
-@keyframes glow {
-  0%,
-  100% {
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
-  }
-}
-
-.control-header h2 {
-  animation: glow 3s ease-in-out infinite;
 }
