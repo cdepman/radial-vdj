@@ -580,6 +580,11 @@ export class Controls {
         label: 'Mane',
         presetUrl: '/presets/mane.json',
       },
+      {
+        file: '/image_assets/needle-and-thread.svg',
+        label: 'Optical Illusion Instrument',
+        presetUrl: '/presets/optical-illusion-instrument.json',
+      },
       { file: '/image_assets/blue-dragon.svg', label: 'Blue Dragon' },
       { file: '/image_assets/takashi.svg', label: 'Takashi' },
       { file: '/image_assets/rubber-duck.png', label: 'Rubber Duck' },
