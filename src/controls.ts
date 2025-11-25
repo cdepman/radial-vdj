@@ -621,7 +621,12 @@ export class Controls {
       }
     })
 
-    dropZone?.addEventListener('click', () => fileInput?.click())
+    dropZone?.addEventListener('click', (e) => {
+      // Only trigger file input if we didn't click on the input itself
+      if (e.target !== fileInput) {
+        fileInput?.click()
+      }
+    })
     dropZone?.addEventListener('dragover', (e) => {
       e.preventDefault()
       dropZone.classList.add('drag-over')
